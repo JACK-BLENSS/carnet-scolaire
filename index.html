@@ -1,0 +1,2534 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A5A3C">
+<title>Carnet de notes</title>
+<style>
+/* ===== Thèmes ===== */
+:root{
+  --bg:#F3F6F4; --card:#FFFFFF; --text:#15231D; --mute:#5C6E65; --line:#E1E9E4;
+  --primary:#0F7B52; --on-primary:#FFFFFF; --tint:#E3F4EC;
+  --accent:#D97800; --accent-tint:#FFF0DA;
+  --danger:#C62F2F; --danger-tint:#FCE8E8;
+  --hero-a:#0A5A3C; --hero-b:#14965F;
+  --shadow:0 1px 2px rgba(16,40,28,.06),0 8px 22px rgba(16,40,28,.07);
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0B1612; --card:#13241D; --text:#E7F1EC; --mute:#98ADA3; --line:#223A30;
+  --primary:#3FD596; --on-primary:#06271B; --tint:#173A2C;
+  --accent:#FFB454; --accent-tint:#3B2C14;
+  --danger:#FF8A80; --danger-tint:#3C1E1E;
+  --hero-a:#0E3B2A; --hero-b:#165C41;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 22px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+
+/* ===== Base ===== */
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0; background:var(--bg); color:var(--text); font-family:var(--sans); line-height:1.45; transition:background-color .3s}
+#app{max-width:760px; margin:0 auto; min-height:100vh; padding-bottom:104px}
+h1,h2,h3{margin:0; line-height:1.2}
+button,input,select,textarea{font:inherit; color:inherit}
+:focus-visible{outline:3px solid var(--primary); outline-offset:2px}
+.hint{color:var(--mute); font-size:.88rem; margin:6px 0}
+.lead{color:var(--mute); margin:4px 0 0}
+.err{color:var(--danger); min-height:1.2em; margin:6px 0; font-weight:600}
+.full{width:100%}
+.status{color:var(--mute); font-size:.8rem; text-align:center; margin:18px 0 0; min-height:1.2em}
+
+/* ===== En-tête ===== */
+.hero{
+  background:radial-gradient(circle at 85% 0%,rgba(255,255,255,.18),transparent 45%),linear-gradient(135deg,var(--hero-a),var(--hero-b));
+  color:#fff; padding:22px 18px 64px; border-radius:0 0 30px 30px;
+}
+.hero-row{display:flex; justify-content:space-between; align-items:flex-start; gap:12px}
+.hero h1{font-size:1.7rem; font-weight:800; letter-spacing:-.01em}
+.hero p{margin:4px 0 0; opacity:.85; font-size:.95rem}
+.pillbtn{border:1.5px solid rgba(255,255,255,.55); background:rgba(255,255,255,.12); color:#fff; padding:7px 14px; border-radius:999px; cursor:pointer; font-size:.85rem; font-weight:600}
+.pillbtn:hover{background:rgba(255,255,255,.22)}
+
+main{padding:0 14px; margin-top:-40px; position:relative}
+main.enter{animation:enter .3s ease-out}
+.pt{font-size:1.3rem; margin:18px 2px 10px; font-weight:800}
+
+/* ===== Cartes ===== */
+.card{background:var(--card); border:1px solid var(--line); border-radius:20px; padding:16px; margin:0 0 12px; box-shadow:var(--shadow)}
+.card>h2:first-child{font-size:1.25rem; font-weight:800; margin:0 0 6px}
+.card h3{font-size:1rem; font-weight:800; margin:18px 0 6px}
+.empty{border:1.5px dashed var(--line); border-radius:16px; padding:16px; color:var(--mute); margin:10px 0; background:var(--card)}
+.banner{background:var(--accent-tint); color:var(--text); border-radius:16px; padding:10px 14px; margin:0 0 12px; font-size:.9rem; display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap}
+.pill{display:inline-block; background:var(--tint); color:var(--primary); border-radius:999px; padding:3px 12px; font-weight:700; font-size:.82rem}
+.pill.small{padding:1px 9px; font-size:.75rem}
+.pill.warn{background:var(--accent-tint); color:var(--accent)}
+
+/* ===== Boutons ===== */
+.btn{border:0; background:var(--primary); color:var(--on-primary); padding:12px 18px; border-radius:14px; cursor:pointer; min-height:46px; font-weight:700; transition:transform .1s, opacity .15s}
+.btn:hover{opacity:.9}
+.btn:active{transform:scale(.97)}
+.btn.alt{background:var(--tint); color:var(--primary)}
+.btn.danger{background:var(--danger-tint); color:var(--danger)}
+.btn.small{padding:6px 14px; min-height:36px; font-size:.88rem; border-radius:11px}
+.btn.block{width:100%}
+.row{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:10px 0}
+.top-actions{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin:6px 0 10px}
+.back{background:none; border:0; color:var(--primary); font-weight:700; padding:6px 2px; cursor:pointer; font-size:.95rem}
+
+/* ===== Champs ===== */
+label{display:block; margin:14px 0 6px; font-weight:700; font-size:.85rem; color:var(--mute)}
+input[type=text],input[type=password],input[type=number],input[type=date],select,textarea{
+  border:1.5px solid var(--line); border-radius:13px; padding:12px 14px; background:var(--card); font-size:16px; max-width:100%;
+  transition:border-color .15s, box-shadow .15s;
+}
+input:focus,select:focus,textarea:focus{outline:none; border-color:var(--primary); box-shadow:0 0 0 4px var(--tint)}
+textarea{resize:vertical}
+input.g{width:78px; text-align:center; padding:10px 6px; font-weight:700}
+input.g.bad{border-color:var(--danger); background:var(--danger-tint)}
+.form-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; align-items:end}
+.form-grid label{margin-top:10px}
+
+/* ===== Sélecteurs ===== */
+.seg{display:flex; gap:4px; background:var(--line); padding:4px; border-radius:999px; margin:10px 0}
+.seg button{flex:1; border:0; background:transparent; color:var(--mute); padding:9px 6px; border-radius:999px; cursor:pointer; font-weight:700; font-size:.9rem; min-height:40px; transition:background-color .15s}
+.seg button.on{background:var(--card); color:var(--primary); box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.chips{display:flex; gap:8px; overflow-x:auto; padding:2px 2px 8px; margin:4px 0; scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none; border:1.5px solid var(--line); background:var(--card); color:var(--text); padding:8px 16px; border-radius:999px; cursor:pointer; font-weight:600; min-height:40px}
+.chips button.on{background:var(--primary); border-color:var(--primary); color:var(--on-primary)}
+
+/* ===== Page d'accueil ===== */
+.door{display:flex; align-items:center; gap:14px; width:100%; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:20px; padding:16px; margin:0 0 12px; cursor:pointer; box-shadow:var(--shadow); transition:transform .15s}
+.door:hover{transform:translateY(-2px)}
+.door .ico{flex:none; width:54px; height:54px; border-radius:16px; display:grid; place-items:center; background:var(--tint); color:var(--primary)}
+.door .ico.o{background:var(--accent-tint); color:var(--accent)}
+.door .ico svg{width:28px; height:28px}
+.door .txt{flex:1; display:flex; flex-direction:column; gap:2px}
+.door .txt b{font-size:1.1rem}
+.door .txt span{color:var(--mute); font-size:.9rem}
+.door .chev{color:var(--mute); font-size:1.6rem}
+svg{fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
+
+/* ===== Avatars et anneaux de moyenne ===== */
+.avatar{flex:none; width:44px; height:44px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:.95rem;
+  background:hsl(var(--h) 60% 90%); color:hsl(var(--h) 55% 28%)}
+:root[data-theme="dark"] .avatar{background:hsl(var(--h) 35% 22%); color:hsl(var(--h) 75% 82%)}
+.avatar.sm{width:34px; height:34px; font-size:.78rem}
+.avatar.lg{width:68px; height:68px; font-size:1.45rem}
+
+@property --p{syntax:'<number>'; inherits:false; initial-value:0}
+.ring{--p:0; --c:var(--primary); --t:5px; position:relative; flex:none; display:inline-grid; place-items:center; width:48px; height:48px; border-radius:50%;
+  background:conic-gradient(var(--c) calc(var(--p) * 1%), var(--line) 0); animation:fill .9s ease-out; vertical-align:middle}
+.ring::before{content:""; position:absolute; inset:var(--t); background:var(--card); border-radius:50%}
+.ring b{position:relative; font-weight:800; font-size:.82rem; color:var(--c)}
+.ring.ko{--c:var(--danger)}
+.ring.none{--c:var(--mute)} .ring.none b{font-weight:600}
+.ring.lg{width:98px; height:98px; --t:10px} .ring.lg b{font-size:1.6rem}
+
+/* ===== Listes d'élèves ===== */
+.student{display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:18px; padding:11px 14px; margin:8px 0; cursor:pointer; box-shadow:var(--shadow); transition:transform .12s}
+.student:hover{transform:translateY(-1px)}
+.student .who{flex:1; min-width:0; display:flex; flex-direction:column}
+.student .name{font-weight:700; overflow:hidden; text-overflow:ellipsis}
+.student .sub{color:var(--mute); font-size:.84rem}
+.child-row{display:flex; align-items:center; gap:8px}
+.child-row .student{flex:1}
+.summary{display:flex; align-items:center; justify-content:space-between; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px 16px; margin:10px 0; box-shadow:var(--shadow)}
+.summary b{font-weight:800}
+
+/* ===== Bulletin ===== */
+.hero-card{display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+.hero-card .id{flex:1; min-width:140px}
+.hero-card h2{font-size:1.3rem; font-weight:800; margin:0}
+.pills{display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 0}
+.subj-top{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px}
+.subj-top b{font-size:1.05rem}
+.nts{margin:4px 0 10px}
+.nt{display:inline-block; background:var(--tint); color:var(--primary); border-radius:999px; padding:3px 11px; margin:3px 6px 3px 0; font-size:.84rem; font-weight:600; white-space:nowrap}
+.nt b{font-weight:800}
+.nt.I{background:var(--accent-tint); color:var(--accent)}
+.bar-line{display:flex; align-items:center; gap:8px; margin:5px 0}
+.bar-line .lbl{width:48px; font-size:.78rem; color:var(--mute)}
+.bar-line b{width:3.2em; text-align:right; font-size:.85rem}
+.track{position:relative; flex:1; height:10px; background:var(--line); border-radius:999px; overflow:hidden}
+.track::after{content:""; position:absolute; left:50%; top:0; bottom:0; border-left:2px dashed var(--danger); opacity:.55}
+.track i{display:block; height:100%; width:var(--w); border-radius:999px; animation:grow .8s ease-out both}
+.track.me i{background:var(--primary)}
+.track.cl i{background:var(--mute); opacity:.5}
+
+/* ===== Fiche élève, notes ===== */
+.note-row{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); flex-wrap:wrap}
+.note-row:last-child{border-bottom:0}
+.note-row .nt{margin:0}
+.note-row .date{flex:1; color:var(--mute); font-size:.88rem; min-width:90px}
+.code-box{background:linear-gradient(135deg,var(--accent-tint),var(--tint)); border-radius:20px; padding:14px 16px; margin:0 0 12px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+.code-box strong{display:block; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:1.7rem; letter-spacing:.14em; color:var(--text)}
+.qrow{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line)}
+.qrow:last-child{border-bottom:0}
+.qrow .name{flex:1; font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis}
+
+/* ===== Guide ===== */
+ol.steps{padding-left:22px} ol.steps li{margin:10px 0}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.85rem; background:var(--tint); padding:1px 6px; border-radius:6px}
+pre.rules{background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:12px; overflow-x:auto; font-size:.78rem; line-height:1.45; white-space:pre}
+
+/* ===== Navigation du bas ===== */
+.bottom{position:fixed; left:0; right:0; bottom:0; max-width:760px; margin:0 auto; background:var(--card); border-top:1px solid var(--line); display:grid; grid-template-columns:repeat(3,1fr); padding:6px 8px calc(6px + env(safe-area-inset-bottom)); z-index:20; box-shadow:0 -6px 18px rgba(16,40,28,.08)}
+.bottom button{display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:0; padding:8px 4px; border-radius:14px; color:var(--mute); cursor:pointer; font-size:.78rem; font-weight:700}
+.bottom button svg{width:24px; height:24px}
+.bottom button.on{color:var(--primary); background:var(--tint)}
+
+/* ===== Notifications ===== */
+#toasts{position:fixed; left:0; right:0; bottom:calc(88px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none; z-index:50}
+.toast{background:var(--text); color:var(--bg); padding:11px 18px; border-radius:14px; max-width:90vw; font-weight:600; box-shadow:0 6px 20px rgba(0,0,0,.25); animation:pop .25s ease-out both}
+.toast.ok{background:var(--primary); color:var(--on-primary)}
+.toast.err{background:var(--danger); color:#fff}
+.toast.out{opacity:0; transition:opacity .4s}
+
+/* ===== Animations ===== */
+@keyframes enter{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+@keyframes grow{from{width:0}}
+@keyframes fill{from{--p:0}}
+@keyframes pop{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none !important; transition:none !important}}
+
+/* ===== Impression du bulletin ===== */
+.print-head{display:none}
+@media print{
+  body{background:#fff; color:#000}
+  #app{padding:0; max-width:none}
+  .hero,.bottom,.no-print,.status,#toasts,.banner{display:none !important}
+  main{margin:0; padding:0}
+  .print-head{display:block; margin-bottom:12px}
+  .card,.summary{box-shadow:none; break-inside:avoid}
+  .ring,.track i{animation:none}
+  .seg button:not(.on){display:none}
+}
+
+/* ===== Import de liste ===== */
+input[type=file]{width:100%; border:1.5px dashed var(--line); border-radius:14px; padding:12px; background:var(--card); font-size:.95rem}
+input[type=file]::file-selector-button{border:0; background:var(--primary); color:var(--on-primary); padding:9px 16px; border-radius:11px; font-weight:700; margin-right:12px; cursor:pointer}
+
+.imp-photo{width:100%; max-height:55vh; object-fit:contain; border-radius:14px; border:1px solid var(--line); margin:8px 0; background:var(--bg)}
+
+/* ===== Ajouts : infos, statistiques, évolution, appréciations ===== */
+.bottom{grid-template-columns:repeat(4,1fr)}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin:0 0 12px}
+.stat{background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px 14px; box-shadow:var(--shadow)}
+.stat b{display:block; font-size:1.6rem; font-weight:800; color:var(--primary); line-height:1.2}
+.stat span{color:var(--mute); font-size:.82rem}
+.bar-line .lbl.wide{width:112px}
+.pos{flex:none; width:26px; text-align:center; font-weight:800; color:var(--primary)}
+.evo{display:flex; gap:18px; flex-wrap:wrap; margin:8px 0}
+.evo-item{display:flex; flex-direction:column; align-items:center; gap:4px; font-size:.82rem; color:var(--mute)}
+.remark{margin:10px 0 0; padding:10px 12px; background:var(--tint); border-radius:12px; font-size:.92rem}
+.newtag{font-style:normal; font-size:.7rem; font-weight:800; background:var(--accent); color:#fff; border-radius:999px; padding:1px 7px; margin-left:4px}
+.news{padding:10px 0; border-bottom:1px solid var(--line)}
+.news:last-child{border-bottom:0}
+.news p{margin:4px 0 0}
+.faq details{border-bottom:1px solid var(--line); padding:4px 0}
+.faq details:last-child{border-bottom:0}
+.faq summary{cursor:pointer; font-weight:700; padding:10px 0; list-style:none}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+"; float:right; color:var(--primary); font-size:1.3rem; line-height:1}
+.faq details[open] summary::after{content:"−"}
+.faq details p{margin:0 0 10px; color:var(--text)}
+a{color:var(--primary); font-weight:700}
+.phrases{display:flex; gap:6px; flex-wrap:wrap; margin:6px 0}
+.phrases button{border:1.5px solid var(--line); background:var(--card); border-radius:999px; padding:6px 12px; font-size:.82rem; cursor:pointer; color:var(--text)}
+
+/* ===== Calendrier des évaluations ===== */
+.evrow{display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--line)}
+.evrow:last-child{border-bottom:0}
+.evrow.past{opacity:.65}
+.evinfo{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px}
+.datebox{flex:none; width:52px; height:56px; border-radius:14px; background:var(--tint); color:var(--primary); display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.1}
+.datebox b{font-size:1.35rem; font-weight:800}
+.datebox span{font-size:.75rem; font-weight:700; text-transform:uppercase}
+.nt small{font-size:.72rem; opacity:.8; margin-left:4px; font-weight:600}
+.datein{padding:7px 10px; font-size:.9rem}
+
+</style>
+</head>
+<body>
+<div id="app"><p>Chargement…</p></div>
+<div id="toasts" role="status" aria-live="polite"></div>
+<script src="config.js"></script>
+<script>
+/* =====================================================================
+   CARNET DE NOTES — application complète en un seul fichier
+
+   MODE ESSAI : tel quel, l'application fonctionne sur CET appareil
+   (les données restent dans le navigateur).
+
+   MODE EN LIGNE (pour que les parents voient les notes sur leur
+   téléphone) : collez la configuration Firebase ci-dessous.
+   Le guide complet est dans l'application : page « Guide d'installation ».
+   ===================================================================== */
+(() => {
+'use strict';
+
+const FIREBASE_CONFIG = Object.assign({
+  apiKey: '',
+  authDomain: '',
+  projectId: '',
+  appId: ''
+}, window.FIREBASE_CONFIG || {});   // ou bien : fichier config.js placé à côté de index.html
+
+const ONLINE = !!(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId);
+const SDK = 'https://www.gstatic.com/firebasejs/10.12.2/';
+const TERMS = [1, 2, 3];
+const TYPES = {D: 'Devoir', I: 'Interrogation'};
+
+/* =====================================================================
+   1. OUTILS
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const slug = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || uid();
+
+const Local = {
+  mem: {},
+  get(k, def) {
+    try { const s = localStorage.getItem(k); return s ? JSON.parse(s) : def; }
+    catch (e) { return k in this.mem ? this.mem[k] : def; }
+  },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { this.mem[k] = v; } }
+};
+
+function toast(msg, kind) {
+  const el = document.createElement('div');
+  el.className = 'toast ' + (kind || '');
+  el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.classList.add('out'), 2800);
+  setTimeout(() => el.remove(), 3300);
+}
+function applyTheme(t) { document.documentElement.dataset.theme = t; Local.set('school-theme', t); }
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+const fmtDate = s => { try { return new Date(s + 'T00:00:00').toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'}); } catch (e) { return ''; } };
+
+/* Code de l'enfant (parents) : 8 caractères sans lettres ambiguës */
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const showCode = c => c.length === 8 ? c.slice(0, 4) + '-' + c.slice(4) : c;
+const normCode = s => s.toUpperCase().replace(/[^A-Z0-9]/g, '');
+function newCode() {
+  let c;
+  do { c = Array.from({length: 8}, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join(''); }
+  while (data.students.some(s => s.code === c));
+  return c;
+}
+function parseMark(raw) {
+  const r = String(raw).trim();
+  if (r === '') return {empty: true};
+  const v = parseFloat(r.replace(',', '.'));
+  if (isNaN(v) || v < 0 || v > 20) return {bad: true};
+  return {v};
+}
+
+/* Code d'entrée personnel d'un professeur : 10 caractères, affiché XXXXX-XXXXX */
+function newTeacherCode(existing) {
+  let c;
+  do {
+    const bytes = new Uint8Array(10);
+    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(bytes);
+    else for (let i = 0; i < 10; i++) bytes[i] = Math.floor(Math.random() * 256);
+    c = Array.from(bytes, b => CODE_CHARS[b % 32]).join('');
+  } while (existing.includes(c));
+  return c;
+}
+const showTeacherCode = c => c.length === 10 ? c.slice(0, 5) + '-' + c.slice(5) : c;
+
+/* Éléments visuels */
+const ICONS = {
+  home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg>',
+  users: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17.5 14c2.4 0 4 1.6 4 4.5"/></svg>',
+  book: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5C4 4.1 5.1 3 6.5 3H20v15H6.5C5.1 18 4 19.1 4 20.5z"/><path d="M4 20.5C4 21.9 5.1 23 6.5 23H20v-5"/></svg>'
+};
+ICONS.info = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5h.01"/></svg>';
+/* ---------- Dates des évaluations ---------- */
+function dateOffset(days) {
+  const d = new Date(); d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function daysUntil(s) {
+  const a = new Date(s + 'T00:00:00'), b = new Date(todayStr() + 'T00:00:00');
+  return Math.round((a - b) / 86400000);
+}
+function whenText(n) {
+  return n === 0 ? 'Aujourd’hui' : n === 1 ? 'Demain' : n > 1 ? `Dans ${n} jours` : n === -1 ? 'Hier' : `Il y a ${-n} jours`;
+}
+function dateBox(d) {
+  const dt = new Date(d + 'T00:00:00');
+  return `<span class="datebox"><b>${dt.getDate()}</b><span>${dt.toLocaleDateString('fr-FR', {month: 'short'}).replace('.', '')}</span></span>`;
+}
+const evLabel = e => e.type === 'D' ? 'Devoir' : 'Interrogation';
+function weekEvalsText(b) {
+  const n = (b.evals || []).filter(e => { const d = daysUntil(e.date); return d >= 0 && d <= 7; }).length;
+  return n ? `, ${n} évaluation${n > 1 ? 's' : ''} cette semaine` : '';
+}
+function nextEvalText(b) {
+  const nxt = (b.evals || []).filter(e => e.date >= todayStr()).sort((x, y) => x.date.localeCompare(y.date))[0];
+  return nxt ? `Prochaine : ${nxt.sub}, ${evLabel(nxt).toLowerCase()}, ${whenText(daysUntil(nxt.date)).toLowerCase()}` : 'Aucune évaluation prévue pour le moment';
+}
+
+ICONS.cal = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
+const initials = n => n.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+const hue = n => { let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
+const avatar = (n, size) => `<span class="avatar ${size || ''}" style="--h:${hue(n)}" aria-hidden="true">${esc(initials(n))}</span>`;
+const fmt1 = x => (Math.round(x * 10) / 10).toFixed(1).replace('.', ',');
+function ring(x, size) {
+  const has = x !== null && x !== undefined;
+  const p = has ? Math.max(0, Math.min(100, x / 20 * 100)).toFixed(1) : 0;
+  return `<span class="ring ${size || ''} ${has ? (x >= 10 ? 'ok' : 'ko') : 'none'}" style="--p:${p}" role="img" aria-label="${has ? 'Moyenne ' + fmt(x) + ' sur 20' : 'Pas de moyenne'}"><b>${has ? fmt1(x) : '–'}</b></span>`;
+}
+
+/* =====================================================================
+   2. DONNÉES ET CALCULS
+   data.students[i] = {id, name, cls, code, notes:[{id,sub,t,type,v,d,by}]}
+   Les classes sont déduites du nom de classe de chaque élève.
+   ===================================================================== */
+let data = {school: '', year: '', phone: '', address: '', news: [], evals: [], subjects: [], students: [], team: []};
+let route = '/';
+let lastRoute = null;
+let me = null;
+let authState = ONLINE ? 'loading' : 'local';
+let authUser = null, profile = null, authMsg = '';
+let fauth = null, fdb = null, unsubs = [];
+let pb = {};
+let resolveSdk;
+const sdkReady = new Promise(r => { resolveSdk = r; });
+
+const newProf = () => ({sub: '', newSub: '', coef: 2, school: ''});
+let pending = null;            // code saisi pendant la connexion en ligne
+const view = {
+  term: 1, tClass: null, pcode: '', status: '', loaded: !ONLINE,
+  ecode: '', entryErr: '', setup: {nom: '', code: '', code2: ''}, prof: newProf(),
+  team: {items: [], loaded: false, loading: false, name: '', err: ''},
+  nf: {type: 'D', v: '', date: todayStr()}, ed: null,
+  add: {cls: '', names: '', photo: ''},
+  qe: {cls: null, type: 'D', date: todayStr(), vals: {}},
+  ev: {cls: null, type: 'D', date: '', title: '', t: null},
+  es: null, nw: {title: '', text: '', date: ''}, rm: null, ny: {year: '', confirm: ''}, restore: null, statSub: null
+};
+
+const plain = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[’'`´\-_.]/g, ' ').replace(/\s+/g, ' ').trim();
+const clsKey = c => plain(c);
+const nameKey = n => plain(n).split(' ').filter(Boolean).sort().join(' ');   // « Aya KOFFI » = « Koffi Aya »
+function classes() {
+  const m = new Map();
+  data.students.forEach(s => { const k = clsKey(s.cls); if (!m.has(k)) m.set(k, s.cls.trim()); });
+  return [...m].map(([key, name]) => ({key, name})).sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+}
+const canonCls = name => { const e = classes().find(c => c.key === clsKey(name)); return e ? e.name : name.trim(); };
+const classStudents = key => data.students.filter(s => clsKey(s.cls) === key);
+const subName = id => (data.subjects.find(s => s.id === id) || {name: '?'}).name;
+const alpha = (a, b) => a.name.localeCompare(b.name, 'fr');
+
+const mean = a => {
+  const v = a.filter(x => x !== null && x !== undefined && !isNaN(x));
+  return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null;
+};
+const notesOf = (st, sub, t) => st.notes.filter(n => n.sub === sub && n.t === t).sort((a, b) => a.d.localeCompare(b.d));
+const subAvg = (st, sub, t) => mean(notesOf(st, sub, t).map(n => n.v));
+function genAvg(st, t) {
+  let n = 0, d = 0;
+  data.subjects.forEach(s => { const m = subAvg(st, s.id, t); if (m !== null) { n += m * s.coef; d += s.coef; } });
+  return d ? n / d : null;
+}
+const classSubAvg = (key, sub, t) => mean(classStudents(key).map(s => subAvg(s, sub, t)));
+function rank(st, t) {
+  const mates = classStudents(clsKey(st.cls)).map(s => ({id: s.id, a: genAvg(s, t)})).filter(x => x.a !== null).sort((a, b) => b.a - a.a);
+  const i = mates.findIndex(x => x.id === st.id);
+  return i < 0 ? null : {r: i + 1, n: mates.length};
+}
+const rkText = (r, n) => r ? `${r === 1 ? '1er' : r + 'e'} sur ${n}` : '';
+const fmt = x => (x === null || x === undefined) ? '–' : (Math.round(x * 100) / 100).toFixed(2).replace('.', ',');
+const fmtMark = x => String(Math.round(x * 100) / 100).replace('.', ',');
+const appr = a => (a === null || a === undefined) ? '' : a >= 16 ? 'Excellent' : a >= 14 ? 'Très bien' : a >= 12 ? 'Bien' : a >= 10 ? 'Passable' : a >= 8 ? 'Insuffisant' : 'Faible';
+const badge = x => ring(x, '');
+const noteChip = (n, isNew, withDate) => `<span class="nt ${n.type}">${n.type === 'D' ? 'Devoir' : 'Interro.'} <b>${fmtMark(n.v)}</b>${withDate && n.d ? `<small>${fmtDate(n.d)}</small>` : ''}${isNew ? '<em class="newtag">nouveau</em>' : ''}</span>`;
+
+/* Professeurs d'un élève : ceux qui l'ont enregistré ou qui lui ont mis une note */
+function teacherList(st) {
+  const list = Object.entries(st.teachers || {})
+    .map(([id, v]) => ({id, nom: v.nom || '', sub: v.sub}))
+    .filter(x => data.subjects.find(s => s.id === x.sub));
+  const have = new Set(list.map(x => x.sub));
+  st.notes.forEach(n => {
+    if (!have.has(n.sub) && data.subjects.find(s => s.id === n.sub)) { have.add(n.sub); list.push({id: '?' + n.sub, nom: '', sub: n.sub}); }
+  });
+  return list.sort((a, b) => subName(a.sub).localeCompare(subName(b.sub), 'fr') || a.nom.localeCompare(b.nom, 'fr'));
+}
+/* Enregistre le professeur connecté parmi les professeurs de l'élève (retourne vrai s'il y a un changement) */
+function linkTeacher(st) {
+  st.teachers = st.teachers || {};
+  const cur = st.teachers[me.id];
+  if (cur && cur.nom === me.nom && cur.sub === me.sub) return false;
+  st.teachers[me.id] = {nom: me.nom, sub: me.sub};
+  return true;
+}
+
+/* Bulletin d'un élève : c'est la SEULE donnée que les parents peuvent lire */
+function buildBulletin(st) {
+  const terms = {}, tl = teacherList(st);
+  const tIdx = id => tl.findIndex(x => x.id === id);
+  TERMS.forEach(t => {
+    const subjects = data.subjects.map(sub => {
+      const ns = notesOf(st, sub.id, t);
+      if (!ns.length) return null;
+      const rm = (st.remarks || {})['t' + t + '_' + sub.id];
+      return {
+        subId: sub.id, name: sub.name, coef: sub.coef,
+        notes: ns.map(n => ({type: n.type, v: n.v, d: n.d, at: n.at || 0, tk: tIdx(n.by)})),
+        avg: subAvg(st, sub.id, t), cavg: classSubAvg(clsKey(st.cls), sub.id, t),
+        remark: rm && rm.text ? rm.text : ''
+      };
+    }).filter(Boolean);
+    if (subjects.length) {
+      const r = rank(st, t);
+      terms[t] = {subjects, gen: genAvg(st, t), rank: r ? r.r : null, n: r ? r.n : null};
+    }
+  });
+  const gens = Object.values(terms).map(x => x.gen).filter(x => x !== null);
+  const cutoff = dateOffset(-45);
+  const evals = (data.evals || []).filter(e => clsKey(e.cls) === clsKey(st.cls) && e.date >= cutoff)
+    .sort((a, b) => a.date.localeCompare(b.date)).slice(0, 40)
+    .map(e => ({type: e.type, date: e.date, title: e.title || '', sub: subName(e.sub), nom: e.nom || '', t: e.t || 0, at: e.at || 0}));
+  return {
+    code: st.code, name: st.name, cls: st.cls.trim(), school: data.school || '', year: data.year || '',
+    upd: new Date().toISOString(), terms, annual: gens.length ? mean(gens) : null, annualN: gens.length,
+    teachers: tl.map(x => ({nom: x.nom, subId: x.sub, sub: subName(x.sub)})), evals
+  };
+}
+
+/* =====================================================================
+   3. ENREGISTREMENT (local ou Firebase)
+   ===================================================================== */
+function persist() { if (!ONLINE) Local.set('school-v3', data); }
+
+function setStatus() { const el = $('#status'); if (el) el.textContent = view.status; }
+function bg(p) {
+  view.status = 'Enregistrement…'; setStatus();
+  Promise.resolve(p).then(() => { view.status = 'Enregistré'; setStatus(); })
+    .catch(e => {
+      console.error(e); view.status = 'Échec de l’enregistrement'; setStatus();
+      toast('L’enregistrement a échoué. Vérifiez la connexion et vos droits d’accès.', 'err');
+    });
+}
+
+const DB = {
+  config() {
+    persist();
+    if (!ONLINE) return Promise.resolve();
+    return fdb.collection('config').doc('ecole').set({school: data.school, year: data.year || '', phone: data.phone || '', address: data.address || '', news: data.news || [], subjects: data.subjects});
+  },
+  putStudents(list) {
+    persist();
+    if (!ONLINE) return Promise.resolve();
+    const b = fdb.batch();
+    list.forEach(s => b.set(fdb.collection('eleves').doc(s.id), {name: s.name, cls: s.cls, code: s.code, notes: s.notes, remarks: s.remarks || {}, teachers: s.teachers || {}}));
+    return b.commit();
+  },
+  updateStudent(s) {
+    persist();
+    if (!ONLINE) return Promise.resolve();
+    return fdb.collection('eleves').doc(s.id).update({name: s.name, cls: s.cls});
+  },
+  addNotes(entries) {
+    persist();
+    if (!ONLINE) return Promise.resolve();
+    const by = {};
+    entries.forEach(e => { (by[e.st.id] = by[e.st.id] || []).push(e.note); });
+    const b = fdb.batch();
+    Object.entries(by).forEach(([sid, notes]) => {
+      b.update(fdb.collection('eleves').doc(sid), {notes: firebase.firestore.FieldValue.arrayUnion(...notes)});
+    });
+    return b.commit();
+  },
+  removeNote(s, note) {
+    persist();
+    if (!ONLINE) return Promise.resolve();
+    return fdb.collection('eleves').doc(s.id).update({notes: firebase.firestore.FieldValue.arrayRemove(note)});
+  },
+  putEval(ev) {
+    persist();
+    if (!ONLINE) return Promise.resolve();
+    return fdb.collection('evaluations').doc(ev.id).set(ev);
+  },
+  deleteEval(id) {
+    persist();
+    if (!ONLINE) return Promise.resolve();
+    return fdb.collection('evaluations').doc(id).delete();
+  },
+  deleteEvals(list) {
+    persist();
+    if (!ONLINE || !list.length) return Promise.resolve();
+    const jobs = [];
+    for (let i = 0; i < list.length; i += 400) {
+      const b = fdb.batch();
+      list.slice(i, i + 400).forEach(e => b.delete(fdb.collection('evaluations').doc(e.id)));
+      jobs.push(b.commit());
+    }
+    return Promise.all(jobs);
+  },
+  updateNote(s, note) {
+    persist();
+    if (!ONLINE) return Promise.resolve();
+    const ref = fdb.collection('eleves').doc(s.id);
+    return fdb.runTransaction(async tx => {
+      const d = (await tx.get(ref)).data();
+      tx.update(ref, {notes: (d.notes || []).map(n => n.id === note.id ? {...n, d: note.d} : n)});
+    });
+  },
+  setTeachers(list) {
+    persist();
+    if (!ONLINE) return Promise.resolve();
+    const b = fdb.batch();
+    list.forEach(s => b.update(fdb.collection('eleves').doc(s.id), {['teachers.' + me.id]: s.teachers[me.id]}));
+    return b.commit();
+  },
+  setRemark(s, key, val) {
+    persist();
+    if (!ONLINE) return Promise.resolve();
+    return fdb.collection('eleves').doc(s.id).update({['remarks.' + key]: val === null ? firebase.firestore.FieldValue.delete() : val});
+  },
+  resetYear(list) {
+    persist();
+    if (!ONLINE) return Promise.resolve();
+    const jobs = [];
+    for (let i = 0; i < list.length; i += 400) {
+      const b = fdb.batch();
+      list.slice(i, i + 400).forEach(s => b.update(fdb.collection('eleves').doc(s.id), {notes: [], remarks: {}}));
+      jobs.push(b.commit());
+    }
+    return Promise.all(jobs);
+  },
+  deleteStudent(s) {
+    persist();
+    if (!ONLINE) return Promise.resolve();
+    const b = fdb.batch();
+    b.delete(fdb.collection('eleves').doc(s.id));
+    b.delete(fdb.collection('bulletins').doc(s.code));
+    return b.commit();
+  }
+};
+
+/* Publication des bulletins pour les parents (en ligne uniquement) */
+const dirty = new Set();
+let pubTimer;
+function markDirty(...keys) {
+  if (!ONLINE) return;
+  keys.forEach(k => dirty.add(k));
+  clearTimeout(pubTimer);
+  pubTimer = setTimeout(publish, 1500);
+}
+async function publish() {
+  const keys = [...dirty]; dirty.clear();
+  const sts = data.students.filter(s => keys.includes(clsKey(s.cls)));
+  try {
+    for (let i = 0; i < sts.length; i += 400) {
+      const b = fdb.batch();
+      sts.slice(i, i + 400).forEach(s => b.set(fdb.collection('bulletins').doc(s.code), buildBulletin(s)));
+      await b.commit();
+    }
+  } catch (e) {
+    console.error(e);
+    keys.forEach(k => dirty.add(k));
+    toast('Les bulletins n’ont pas pu être publiés pour les parents. Réessayez dans « Mon compte ».', 'err');
+  }
+}
+
+/* Lecture d'un bulletin par un parent : false = erreur réseau, null = introuvable */
+const Bulletins = {
+  async get(code) {
+    if (ONLINE) {
+      await sdkReady;
+      if (!fdb) return false;
+      try { const d = await fdb.collection('bulletins').doc(code).get(); return d.exists ? d.data() : null; }
+      catch (e) { console.error(e); return false; }
+    }
+    const st = data.students.find(s => s.code === code);
+    return st ? buildBulletin(st) : null;
+  }
+};
+const childCodes = () => Local.get('school-children', []);
+function ensureChild(code) {
+  if (code in pb) return;
+  pb[code] = 'loading';
+  Bulletins.get(code).then(b => { pb[code] = b; softRender(); });
+}
+
+/* Informations publiques de l'établissement (annonces, contact) lues par les parents */
+const pub = {v: undefined, loading: false};
+const Public = {
+  async get() {
+    if (!ONLINE) return data;
+    await sdkReady;
+    if (!fdb) return false;
+    try { const d = await fdb.collection('public').doc('ecole').get(); return d.exists ? d.data() : null; }
+    catch (e) { console.error(e); return false; }
+  }
+};
+function ensurePub() {
+  if (!ONLINE || me || pub.v !== undefined || pub.loading) return;
+  pub.loading = true;
+  Public.get().then(v => { pub.v = v; pub.loading = false; softRender(); });
+}
+const info = () => (!ONLINE || me) ? data
+  : ((pub.v && typeof pub.v === 'object') ? pub.v : {school: '', year: '', phone: '', address: '', news: []});
+function publishPublic() {
+  if (!ONLINE || !me || !me.admin) return;
+  bg(fdb.collection('public').doc('ecole').set({
+    school: data.school || '', year: data.year || '', phone: data.phone || '', address: data.address || '',
+    news: data.news || [], upd: Date.now()
+  }));
+}
+
+/* Nouvelles notes depuis la dernière visite (appareil du parent) */
+const sessionSeen = {};
+function newCount(b, code) {
+  const ls = Local.get('school-seen', {})[code];
+  if (!ls) return 0;
+  let n = 0;
+  Object.values(b.terms).forEach(T => T.subjects.forEach(s => s.notes.forEach(x => { if ((x.at || 0) > ls) n++; })));
+  return n;
+}
+function markSeen(code) {
+  if (code in sessionSeen) return;
+  const seen = Local.get('school-seen', {});
+  sessionSeen[code] = seen[code] || Date.now();
+  seen[code] = Date.now();
+  Local.set('school-seen', seen);
+}
+
+/* Synchronisation en temps réel pour les professeurs */
+function softRender() {
+  const a = document.activeElement;
+  if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+  render();
+}
+function startSync() {
+  stopSync();
+  let gotE = false, gotC = false;
+  const check = () => { if (gotE && gotC) view.loaded = true; };
+  unsubs.push(fdb.collection('eleves').onSnapshot(snap => {
+    snap.docChanges().forEach(ch => {
+      const d = ch.doc.data();
+      const st = {id: ch.doc.id, name: d.name, cls: d.cls, code: d.code, notes: d.notes || [], remarks: d.remarks || {}, teachers: d.teachers || {}};
+      const i = data.students.findIndex(s => s.id === st.id);
+      if (ch.type === 'removed') { if (i >= 0) data.students.splice(i, 1); }
+      else if (i >= 0) data.students[i] = st; else data.students.push(st);
+    });
+    gotE = true; check(); softRender();
+  }, e => { console.error(e); toast('Connexion aux données impossible.', 'err'); }));
+  unsubs.push(fdb.collection('evaluations').onSnapshot(snap => {
+    snap.docChanges().forEach(ch => {
+      const ev = {...ch.doc.data(), id: ch.doc.id};
+      const i = data.evals.findIndex(x => x.id === ev.id);
+      if (ch.type === 'removed') { if (i >= 0) data.evals.splice(i, 1); }
+      else if (i >= 0) data.evals[i] = ev; else data.evals.push(ev);
+    });
+    softRender();
+  }, e => console.error(e)));
+  unsubs.push(fdb.collection('config').doc('ecole').onSnapshot(doc => {
+    if (doc.exists) { const d = doc.data(); data.school = d.school || ''; data.year = d.year || ''; data.phone = d.phone || ''; data.address = d.address || ''; data.news = d.news || []; data.subjects = d.subjects || []; }
+    gotC = true; check(); softRender();
+  }, e => console.error(e)));
+}
+function stopSync() { unsubs.forEach(u => u()); unsubs = []; view.loaded = false; data = {school: '', year: '', phone: '', address: '', news: [], evals: [], subjects: [], students: [], team: []}; }
+
+/* =====================================================================
+   4. CODE D'ENTRÉE PERSONNEL DES PROFESSEURS
+   En ligne : chaque professeur a son propre code, créé par l'administrateur
+   dans la collection « invitations ». Le code sert d'identifiant : le compte
+   Firebase est dérivé du code. Retirer le code coupe l'accès immédiatement.
+   Mode essai : la liste des professeurs est enregistrée sur l'appareil.
+   ===================================================================== */
+const teacherEmail = code => code.toLowerCase() + '@prof.carnet-ecole.app';
+function authError(msg) { const el = $('#autherr'); if (el) el.textContent = msg; }
+
+async function doEnterOnline() {
+  const code = normCode(view.ecode);
+  if (code.length < 6) return authError('Saisissez votre code d’entrée personnel.');
+  authError('Vérification…');
+  try {
+    await sdkReady;
+    const inv = await fdb.collection('invitations').doc(code).get();
+    if (!inv.exists) return authError('Code d’entrée incorrect ou retiré.');
+    pending = {code, nom: inv.data().nom || ''};
+    try {
+      await fauth.signInWithEmailAndPassword(teacherEmail(code), code);
+    } catch (e) {
+      if (['auth/user-not-found', 'auth/invalid-credential', 'auth/wrong-password', 'auth/invalid-login-credentials'].includes(e.code)) {
+        await fauth.createUserWithEmailAndPassword(teacherEmail(code), code);
+      } else throw e;
+    }
+    view.ecode = '';
+  } catch (e) {
+    console.error(e); pending = null;
+    authError(e && e.code === 'auth/network-request-failed' ? 'Connexion internet indisponible.'
+      : 'Connexion impossible. Vérifiez la connexion internet et la configuration.');
+  }
+}
+
+async function checkAccess() {
+  authState = 'checking'; render();
+  try {
+    const ref = fdb.collection('autorises').doc(authUser.uid);
+    let snap = await ref.get();
+    if (!snap.exists) {
+      if (!pending) { await fauth.signOut(); return; }
+      try { await ref.set({code: pending.code, nom: pending.nom}); }
+      catch (e) {
+        console.error(e);
+        pending = null; view.entryErr = 'Code d’entrée incorrect ou retiré.';
+        try { await authUser.delete(); } catch (x) { await fauth.signOut(); }
+        return;
+      }
+      snap = await ref.get();
+    }
+    pending = null;
+    const p = snap.data();
+    const inv = await fdb.collection('invitations').doc(p.code).get();
+    if (!inv.exists) { authState = 'revoked'; render(); return; }
+    const iv = inv.data();
+    startSync();
+    me = {id: authUser.uid, nom: iv.nom || p.nom || 'Professeur', sub: p.matiere || '', admin: iv.admin === true, code: p.code};
+    authState = me.sub ? 'ready' : 'profile';
+  } catch (e) {
+    console.error(e);
+    authMsg = 'Impossible de vérifier votre accès. Vérifiez la connexion internet et les règles Firestore.';
+    authState = 'error';
+  }
+  render();
+}
+
+const meFromTeam = t => ({id: t.id, nom: t.nom, sub: t.sub || '', admin: !!t.admin, code: t.code});
+
+function doEnterLocal() {
+  const code = normCode(view.ecode);
+  const t = data.team.find(x => x.code === code);
+  if (!t) return authError('Code d’entrée incorrect.');
+  t.used = true; persist();
+  me = meFromTeam(t); view.ecode = '';
+  navigate('/prof');
+}
+function doSetupAdmin() {
+  const s = view.setup, nom = s.nom.trim(), code = normCode(s.code);
+  if (!nom) return authError('Saisissez votre nom.');
+  if (code.length < 6) return authError('Le code doit contenir au moins 6 lettres ou chiffres.');
+  if (code !== normCode(s.code2)) return authError('Les deux codes ne sont pas identiques.');
+  const t = {id: uid(), nom, code, admin: true, sub: '', used: true};
+  data.team.push(t); persist();
+  view.setup = {nom: '', code: '', code2: ''};
+  me = meFromTeam(t);
+  toast('Compte administrateur créé.', 'ok');
+  navigate('/prof');
+}
+
+/* =====================================================================
+   5. NAVIGATION ET MISE EN PAGE
+   ===================================================================== */
+function navigate(p) {
+  route = p;
+  if (p === '/prof/equipe') view.team.loaded = false;
+  if (p !== '/prof/etablissement') view.es = null;
+  try { if (location.hash !== '#' + p) location.hash = p; } catch (e) {}
+  render();
+  window.scrollTo(0, 0);
+}
+window.addEventListener('hashchange', () => {
+  let h = '/';
+  try { h = location.hash.slice(1) || '/'; } catch (e) {}
+  if (h !== route) { route = h; render(); }
+});
+
+const termBar = () => `<div class="seg" role="group" aria-label="Trimestre">${
+  TERMS.map(t => `<button data-a="term" data-v="${t}" class="${view.term === t ? 'on' : ''}">Trimestre ${t}</button>`).join('')
+}</div>`;
+const banner = () => ONLINE ? '' : `<div class="banner"><span>Mode essai : les données restent sur cet appareil.</span>
+  <button class="btn small" data-go="/aide">Mettre en ligne</button></div>`;
+const backBtn = to => `<button class="back" data-go="${to}">‹ Retour</button>`;
+
+function render() {
+  const app = $('#app');
+  ensurePub();
+  const inP = route.startsWith('/parents'), inT = route.startsWith('/prof'), inI = route === '/infos' || route === '/aide';
+  const body = route === '/aide' ? helpPage() : route === '/infos' ? infosPage()
+    : inP ? parentRoute()
+    : inT ? profPage() : homePage();
+  const animate = route !== lastRoute;
+  lastRoute = route;
+  const dark = document.documentElement.dataset.theme === 'dark';
+  const inf = info();
+  app.innerHTML = `
+    <header class="hero">
+      <div class="hero-row">
+        <div>
+          <h1>Carnet de notes</h1>
+          <p>${esc(inf.school || 'Suivi des notes des élèves')}${inf.year ? `, année ${esc(inf.year)}` : ''}</p>
+        </div>
+        <button class="pillbtn theme no-print" data-a="theme">${dark ? 'Mode clair' : 'Mode sombre'}</button>
+      </div>
+    </header>
+    <main class="${animate ? 'enter' : ''}">
+      ${banner()}
+      ${body}
+      <p id="status" class="status" aria-live="polite">${esc(view.status)}</p>
+    </main>
+    <nav class="bottom no-print" aria-label="Pages du site">
+      <button data-go="/" class="${!inP && !inT && !inI ? 'on' : ''}">${ICONS.home}<span>Accueil</span></button>
+      <button data-go="/parents" class="${inP ? 'on' : ''}">${ICONS.users}<span>Parents</span></button>
+      <button data-go="/prof" class="${inT ? 'on' : ''}">${ICONS.book}<span>Professeurs</span></button>
+      <button data-go="/infos" class="${inI ? 'on' : ''}">${ICONS.info}<span>Infos</span></button>
+    </nav>`;
+}
+
+const sortedNews = inf => (inf.news || []).slice().sort((a, b) => (b.at || 0) - (a.at || 0));
+const fmtDateLong = s => { try { return new Date(s + 'T00:00:00').toLocaleDateString('fr-FR', {day: 'numeric', month: 'long', year: 'numeric'}); } catch (e) { return s; } };
+
+function homePage() {
+  const top = sortedNews(info())[0];
+  return `
+    <h2 class="pt">Bienvenue</h2>
+    <button class="door" data-go="/parents">
+      <span class="ico">${ICONS.users}</span>
+      <span class="txt"><b>Espace parents</b><span>Entrez le code de votre enfant pour voir ses notes. Lecture seule.</span></span>
+      <span class="chev">›</span>
+    </button>
+    <button class="door" data-go="/prof">
+      <span class="ico o">${ICONS.book}</span>
+      <span class="txt"><b>Espace professeurs</b><span>Chaque professeur entre avec son code personnel pour saisir ses élèves et ses notes.</span></span>
+      <span class="chev">›</span>
+    </button>
+    ${top ? `<button class="door" data-go="/infos">
+      <span class="ico o">${ICONS.info}</span>
+      <span class="txt"><b>${esc(top.title)}</b><span>${esc(top.text.length > 90 ? top.text.slice(0, 90) + '…' : top.text)}</span></span>
+      <span class="chev">›</span>
+    </button>` : ''}
+    <p><button class="btn alt small" data-go="/infos">Infos, aide et contact</button></p>`;
+}
+
+/* ---------- Infos : établissement, annonces, aide ---------- */
+const FAQ_PARENTS = [
+  ['Comment voir les notes de mon enfant ?', 'Allez dans « Parents », entrez le code de votre enfant (remis par le professeur ou l’établissement) puis touchez « Voir les notes ». Un menu s’ouvre avec le bulletin complet et la liste des professeurs de votre enfant, avec leur matière : touchez un professeur pour voir ses notes. Le code reste enregistré sur votre téléphone. Si vous avez plusieurs enfants, ajoutez un code pour chacun.'],
+  ['Que signifient les cercles de couleur ?', 'Le cercle indique la moyenne sur 20 : vert à partir de 10, rouge en dessous de 10. Sur les barres, le trait rouge pointillé marque la moyenne de 10, et la barre grise donne la moyenne de la classe.'],
+  ['Comment la moyenne est-elle calculée ?', 'La moyenne d’une matière est la moyenne de toutes les notes du trimestre (devoirs et interrogations). La moyenne générale est la moyenne des matières, multipliées par leur coefficient. La moyenne annuelle est la moyenne des moyennes de chaque trimestre.'],
+  ['Que veulent dire le rang et l’appréciation ?', 'Le rang est la place de l’élève dans sa classe selon la moyenne générale (par exemple 3e sur 40). L’appréciation est indicative : 16 et plus Excellent, 14 à 16 Très bien, 12 à 14 Bien, 10 à 12 Passable, 8 à 10 Insuffisant, moins de 8 Faible.'],
+  ['Où trouver les dates des devoirs et interrogations ?', 'Dans le menu de votre enfant, touchez « Calendrier des évaluations » : vous y voyez les devoirs et interrogations prévus par les professeurs (matière, date, sujet), ainsi que les évaluations récentes. La date de chaque note figure aussi dans le bulletin.'],
+  ['Que veut dire « nouveau » sur une note ?', 'La note a été ajoutée depuis votre dernière visite. Le nombre de nouvelles notes s’affiche aussi sous le nom de l’enfant dans la liste.'],
+  ['J’ai perdu le code de mon enfant', 'Demandez-le au professeur principal ou à l’établissement : le code figure sur la fiche de l’élève.'],
+  ['Comment mettre le site sur l’écran d’accueil ?', 'Sur Android (Chrome) : menu ⋮ puis « Ajouter à l’écran d’accueil ». Sur iPhone (Safari) : bouton Partager puis « Sur l’écran d’accueil ». Le site s’ouvrira alors comme une application.']
+];
+const FAQ_PROFS = [
+  ['Premiers pas', 'Entrez avec le code d’entrée personnel remis par l’administrateur, puis choisissez la matière que vous enseignez. Ne partagez jamais ce code.'],
+  ['Ajouter mes élèves', 'Dans « Ajouter des élèves », tapez le nom de la classe et la liste des noms, ou importez la liste depuis une photo, un PDF, un fichier Word ou Excel. Vérifiez les noms avant d’ajouter. Chaque élève reçoit un seul code, le même pour tous ses professeurs : si un collègue a déjà enregistré l’élève dans la même classe, vous le retrouvez avec son code et vous êtes ajouté(e) à ses professeurs.'],
+  ['Saisir des notes', 'Avec « Saisir des notes », vous entrez une même évaluation (devoir ou interrogation) pour toute la classe en une fois. Vous pouvez aussi ajouter une note depuis la fiche d’un élève.'],
+  ['Corriger une erreur', 'Ouvrez la fiche de l’élève, supprimez la note concernée et saisissez-la de nouveau. Chaque professeur ne peut supprimer que ses propres notes.'],
+  ['Planifier les évaluations', 'Dans « Évaluations », indiquez la classe, le type (devoir ou interrogation), la date et le sujet : les parents de la classe voient le calendrier. Le jour venu, touchez « Saisir les notes » : la classe, le type et la date sont déjà remplis. Vous pouvez aussi corriger la date d’une note depuis la fiche de l’élève.'],
+  ['Appréciation et statistiques', 'Sur la fiche de l’élève, vous pouvez écrire une appréciation visible par les parents. La page « Statistiques » donne la moyenne, la répartition, les élèves à surveiller et le classement de la classe, avec export CSV et impression.']
+];
+const faqBlock = list => list.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('');
+
+function infosPage() {
+  const inf = info(), news = sortedNews(inf);
+  const hasContact = inf.phone || inf.address || inf.year;
+  return `
+    <h2 class="pt">Infos et aide</h2>
+    ${hasContact ? `<div class="card">
+      <h2>${esc(inf.school || 'Établissement')}</h2>
+      ${inf.year ? `<p class="lead">Année scolaire ${esc(inf.year)}</p>` : ''}
+      ${inf.phone ? `<p><b>Téléphone :</b> <a href="tel:${esc(inf.phone.replace(/[^\d+]/g, ''))}">${esc(inf.phone)}</a></p>` : ''}
+      ${inf.address ? `<p><b>Adresse :</b> ${esc(inf.address)}</p>` : ''}
+    </div>` : ''}
+    ${news.length ? `<div class="card"><h2>Annonces</h2>${news.map(n => `<div class="news">
+      <div><b>${esc(n.title)}</b>${n.date ? ` <span class="pill small">${esc(fmtDateLong(n.date))}</span>` : ''}</div>
+      ${n.text ? `<p>${esc(n.text)}</p>` : ''}</div>`).join('')}</div>` : ''}
+    <div class="card faq"><h2>Pour les parents</h2>${faqBlock(FAQ_PARENTS)}</div>
+    <div class="card faq"><h2>Pour les professeurs</h2>${faqBlock(FAQ_PROFS)}</div>
+    <p><button class="btn alt small" data-go="/aide">Guide d’installation (administrateur)</button></p>`;
+}
+
+/* =====================================================================
+   6. ESPACE PARENTS (lecture seule)
+   ===================================================================== */
+function parentsPage() {
+  const codes = childCodes();
+  codes.forEach(ensureChild);
+  const t = view.term;
+  const rows = codes.map(code => {
+    const b = pb[code];
+    const rm = `<button class="btn alt small" data-a="rmchild" data-code="${code}">Retirer</button>`;
+    const plain = txt => `<div class="child-row"><span class="student"><span class="who"><span class="name">${txt}</span></span></span>${rm}</div>`;
+    if (b === 'loading' || b === undefined) return `<div class="child-row"><span class="student"><span class="who"><span class="name">Chargement…</span></span></span></div>`;
+    if (b === false) return plain(`Connexion impossible (${esc(showCode(code))})`);
+    if (b === null) return plain(`Code introuvable (${esc(showCode(code))})`);
+    return `<div class="child-row">
+      <button class="student" data-go="/parents/eleve/${code}">
+        ${avatar(b.name)}
+        <span class="who"><span class="name">${esc(b.name)}</span><span class="sub">${esc(b.cls)}${weekEvalsText(b)}${newCount(b, code) ? `, ${newCount(b, code)} nouvelle${newCount(b, code) > 1 ? 's' : ''} note${newCount(b, code) > 1 ? 's' : ''}` : ''}</span></span>
+        ${badge(b.terms[t] ? b.terms[t].gen : null)}
+      </button>${rm}</div>`;
+  }).join('');
+  return `
+    <div class="card">
+      <div class="top-actions" style="margin-top:0">
+        <h2 style="margin:0">Les notes de mon enfant</h2>
+        <button class="btn alt small" data-a="refresh">Actualiser</button>
+      </div>
+      <p class="hint">Le professeur vous donne un code pour chaque enfant. Entrez-le ici : il restera enregistré sur cet appareil.</p>
+      <label for="pcode">Code de l’enfant</label>
+      <div class="row" style="margin-top:0">
+        <input type="text" id="pcode" data-f="pcode" value="${esc(view.pcode)}" placeholder="Ex. : K7M2-QX4R" autocomplete="off" autocapitalize="characters" style="flex:1; min-width:150px">
+        <button class="btn" data-a="addchild">Voir les notes</button>
+      </div>
+      <p id="pcerr" class="err" aria-live="polite"></p>
+    </div>
+    ${codes.length ? `<h2 class="pt">Mes enfants</h2>${termBar()}${rows}` : ''}`;
+}
+
+/* ---------- Parcours du parent : code, menu des professeurs, notes ---------- */
+function parentRoute() {
+  if (!route.startsWith('/parents/eleve/')) return parentsPage();
+  const p = route.split('/');
+  if (p[4] === 'bulletin') return bulletinPage();
+  if (p[4] === 'prof') return teacherPage();
+  if (p[4] === 'agenda') return agendaPage();
+  return childMenuPage();
+}
+function childGuard(back) {
+  const code = route.split('/')[3];
+  if (!childCodes().includes(code)) return {html: `${back}<div class="empty">Cet élève n’est pas dans votre liste. Entrez son code depuis la page Parents.</div>`};
+  ensureChild(code);
+  const b = pb[code];
+  if (b === 'loading' || b === undefined) return {html: `${back}<div class="card">Chargement…</div>`};
+  if (b === false) return {html: `${back}<div class="empty">Connexion impossible. Vérifiez votre connexion internet puis touchez Actualiser.</div><button class="btn" data-a="refresh">Actualiser</button>`};
+  if (b === null) return {html: `${back}<div class="empty">Ce code n’existe plus. Demandez le nouveau code au professeur.</div>`};
+  markSeen(code);
+  return {code, b, seenAt: sessionSeen[code]};
+}
+/* Notes d'un professeur : s'il est seul dans sa matière, il reprend aussi les anciennes notes sans auteur connu */
+function teacherNotes(b, T, k) {
+  const tc = (b.teachers || [])[k];
+  if (!T || !tc) return [];
+  const s = T.subjects.find(x => x.subId === tc.subId);
+  if (!s) return [];
+  const alone = b.teachers.filter(x => x.subId === tc.subId).length === 1;
+  return s.notes.filter(n => n.tk === k || (alone && n.tk === -1));
+}
+
+/* Menu de l'élève : bulletin complet + tous ses professeurs avec leur matière */
+function childMenuPage() {
+  const g = childGuard(backBtn('/parents'));
+  if (g.html) return g.html;
+  const {code, b, seenAt} = g, t = view.term, T = b.terms[t], base = '/parents/eleve/' + code;
+  const rows = (b.teachers || []).map((tc, k) => {
+    const notes = teacherNotes(b, T, k), nn = notes.filter(n => (n.at || 0) > seenAt).length;
+    return `<button class="student" data-go="${base}/prof/${k}">
+      ${avatar(tc.nom || tc.sub)}
+      <span class="who"><span class="name">${esc(tc.nom || 'Professeur')}</span><span class="sub">${esc(tc.sub)}${nn ? `, ${nn} nouvelle${nn > 1 ? 's' : ''} note${nn > 1 ? 's' : ''}` : ''}</span></span>
+      ${ring(mean(notes.map(n => n.v)), '')}
+    </button>`;
+  }).join('');
+  return `
+    ${backBtn('/parents')}
+    <div class="card hero-card">
+      ${avatar(b.name, 'lg')}
+      <div class="id"><h2>${esc(b.name)}</h2><p class="lead">${esc(b.cls)}${b.year ? `, ${esc(b.year)}` : ''}</p></div>
+      ${T ? ring(T.gen, 'lg') : ''}
+    </div>
+    ${termBar()}
+    <button class="door" data-go="${base}/bulletin">
+      <span class="ico">${ICONS.book}</span>
+      <span class="txt"><b>Bulletin complet</b><span>${T ? `Moyenne générale ${fmt(T.gen)}, rang ${rkText(T.rank, T.n) || '–'}` : 'Aucune note pour ce trimestre'}</span></span>
+      <span class="chev">›</span>
+    </button>
+    <button class="door" data-go="${base}/agenda">
+      <span class="ico o">${ICONS.cal}</span>
+      <span class="txt"><b>Calendrier des évaluations</b><span>${esc(nextEvalText(b))}</span></span>
+      <span class="chev">›</span>
+    </button>
+    <h2 class="pt">Professeurs et matières</h2>
+    ${rows || '<div class="empty">Aucun professeur n’est encore enregistré pour cet élève.</div>'}
+    <p class="hint">Touchez un professeur pour voir ses notes, son appréciation et la moyenne de la classe dans sa matière.</p>`;
+}
+
+/* Notes d'un professeur */
+function teacherPage() {
+  const p = route.split('/'), k = +p[5], back = backBtn('/parents/eleve/' + p[3]);
+  const g = childGuard(back);
+  if (g.html) return g.html;
+  const {b, seenAt} = g, tc = (b.teachers || [])[k];
+  if (!tc) return `${back}<div class="empty">Ce professeur n’est plus dans la liste.</div>`;
+  const t = view.term, T = b.terms[t], s = T && T.subjects.find(x => x.subId === tc.subId);
+  const notes = teacherNotes(b, T, k), avg = mean(notes.map(n => n.v));
+  const w = x => x === null || x === undefined ? 0 : Math.round(x / 20 * 100);
+  return `
+    ${back}
+    <div class="card hero-card">
+      ${avatar(tc.nom || tc.sub, 'lg')}
+      <div class="id"><h2>${esc(tc.nom || 'Professeur')}</h2><p class="lead">${esc(tc.sub)}, ${esc(b.name)}</p></div>
+      ${ring(avg, 'lg')}
+    </div>
+    ${termBar()}
+    ${notes.length ? `<section class="card">
+      <h2>Notes du trimestre ${t}</h2>
+      ${notes.map(n => `<div class="note-row">${noteChip(n, (n.at || 0) > seenAt)}<span class="date">${esc(TYPES[n.type])}, ${fmtDate(n.d)}</span></div>`).join('')}
+      <div class="bar-line"><span class="lbl">Élève</span><span class="track me"><i style="--w:${w(avg)}%"></i></span><b>${fmt(avg)}</b></div>
+      <div class="bar-line"><span class="lbl">Classe</span><span class="track cl"><i style="--w:${w(s.cavg)}%"></i></span><b>${fmt(s.cavg)}</b></div>
+      ${s.remark ? `<p class="remark"><b>Appréciation du professeur :</b> ${esc(s.remark)}</p>` : ''}
+    </section>` : `<div class="empty">Aucune note de ce professeur pour le trimestre ${t}.</div>`}
+    <p class="hint">Le trait rouge pointillé marque la moyenne de 10.</p>`;
+}
+
+/* Calendrier des évaluations de la classe de l'élève */
+function agendaPage() {
+  const code = route.split('/')[3], back = backBtn('/parents/eleve/' + code);
+  const g = childGuard(back);
+  if (g.html) return g.html;
+  const {b, seenAt} = g, today = todayStr();
+  const all = (b.evals || []).slice().sort((x, y) => x.date.localeCompare(y.date));
+  const up = all.filter(e => e.date >= today), past = all.filter(e => e.date < today).reverse();
+  const item = e => {
+    const n = daysUntil(e.date);
+    return `<div class="evrow ${n < 0 ? 'past' : ''}">${dateBox(e.date)}
+      <div class="evinfo">
+        <div><b>${esc(e.sub)}</b> <span class="nt ${e.type}">${evLabel(e)}</span>${(e.at || 0) > seenAt ? '<em class="newtag">nouveau</em>' : ''}</div>
+        ${e.title ? `<div>${esc(e.title)}</div>` : ''}
+        <span class="hint">${esc(whenText(n))}, ${esc(fmtDateLong(e.date))}${e.nom ? ', ' + esc(e.nom) : ''}</span>
+      </div></div>`;
+  };
+  return `
+    ${back}
+    <div class="card"><h2>Calendrier des évaluations</h2><p class="lead">${esc(b.name)}, ${esc(b.cls)}</p></div>
+    <div class="card"><h2>À venir</h2>${up.length ? up.map(item).join('') : '<p class="hint">Aucune évaluation prévue pour le moment.</p>'}</div>
+    ${past.length ? `<div class="card"><h2>Passées</h2>${past.slice(0, 15).map(item).join('')}</div>` : ''}
+    <p class="hint">Les dates sont données par les professeurs et peuvent changer : en cas de doute, renseignez-vous auprès de l’établissement.</p>`;
+}
+
+/* Bulletin complet : toutes les matières */
+function bulletinPage() {
+  const code = route.split('/')[3], back = backBtn('/parents/eleve/' + code);
+  const g = childGuard(back);
+  if (g.html) return g.html;
+  const {b, seenAt} = g;
+  const t = view.term, T = b.terms[t];
+  const prevT = TERMS.filter(x => x < t && b.terms[x]).pop();
+  const diff = T && prevT ? T.gen - b.terms[prevT].gen : null;
+  const doneTerms = TERMS.filter(x => b.terms[x]);
+  const subjects = T ? T.subjects.map(s => {
+    const w = x => x === null || x === undefined ? 0 : Math.round(x / 20 * 100);
+    const who = (b.teachers || []).filter(x => x.subId === s.subId).map(x => x.nom).filter(Boolean).join(', ');
+    return `<section class="card">
+      <div class="subj-top"><div><b>${esc(s.name)}</b> <span class="pill small">coef. ${s.coef}</span>${who ? `<br><span class="sub-coef">${esc(who)}</span>` : ''}</div>${badge(s.avg)}</div>
+      <div class="nts">${s.notes.map(n => noteChip(n, (n.at || 0) > seenAt, true)).join('')}</div>
+      <div class="bar-line"><span class="lbl">Élève</span><span class="track me"><i style="--w:${w(s.avg)}%"></i></span><b>${fmt(s.avg)}</b></div>
+      <div class="bar-line"><span class="lbl">Classe</span><span class="track cl"><i style="--w:${w(s.cavg)}%"></i></span><b>${fmt(s.cavg)}</b></div>
+      ${s.remark ? `<p class="remark"><b>Appréciation du professeur :</b> ${esc(s.remark)}</p>` : ''}
+    </section>`;
+  }).join('') : '';
+  return `
+    <div class="top-actions no-print">${back}<button class="btn small" data-a="print">Imprimer le bulletin</button></div>
+    <div class="print-head"><h2>${esc(b.school)}</h2><p>Bulletin de notes, trimestre ${t}${b.year ? `, année scolaire ${esc(b.year)}` : ''}</p></div>
+    <div class="card hero-card">
+      ${avatar(b.name, 'lg')}
+      <div class="id"><h2>${esc(b.name)}</h2><p class="lead">${esc(b.cls)}${b.year ? `, ${esc(b.year)}` : ''}</p></div>
+      ${T ? ring(T.gen, 'lg') : ''}
+      ${T ? `<div class="pills" style="width:100%">
+        <span class="pill">Rang : ${rkText(T.rank, T.n) || '–'}</span>
+        <span class="pill warn">${esc(appr(T.gen) || '–')}</span>
+        ${diff !== null ? `<span class="pill ${diff >= 0 ? '' : 'warn'}">${diff >= 0 ? '↑ Progression' : '↓ Baisse'} de ${fmt(Math.abs(diff))} point${Math.abs(diff) >= 2 ? 's' : ''} depuis le trimestre ${prevT}</span>` : ''}
+      </div>` : ''}
+    </div>
+    <div class="no-print">${termBar()}</div>
+    ${T ? subjects : '<div class="empty">Aucune note pour ce trimestre pour le moment.</div>'}
+    ${doneTerms.length >= 2 ? `<section class="card"><h2>Évolution dans l’année</h2>
+      <div class="evo">${doneTerms.map(x => `<div class="evo-item">${ring(b.terms[x].gen, '')}<span>Trimestre ${x}</span></div>`).join('')}</div>
+      <p class="hint">Moyenne annuelle provisoire : <b>${fmt(b.annual)}</b> (${b.annualN} trimestres).</p>
+    </section>` : ''}
+    ${T ? `<p class="hint">Le trait rouge pointillé marque la moyenne de 10. Mis à jour le ${esc(new Date(b.upd).toLocaleDateString('fr-FR'))}.</p>` : ''}`;
+}
+
+/* =====================================================================
+   7. ESPACE PROFESSEURS
+   ===================================================================== */
+const wait = txt => `<div class="card">${txt}</div>`;
+function profPage() {
+  if (ONLINE) {
+    switch (authState) {
+      case 'loading': return wait('Chargement…');
+      case 'out': return entryPage();
+      case 'checking': return wait('Vérification de votre accès…');
+      case 'revoked': return infoPage('Accès retiré', 'Votre code d’entrée n’est plus valide. Contactez l’administrateur de l’établissement.', false);
+      case 'error': return infoPage('Problème de connexion', authMsg, true);
+      case 'profile': return view.loaded ? profileForm() : wait('Chargement…');
+    }
+  } else {
+    if (!data.team.length) return setupAdminPage();
+    if (!me) return entryPage();
+    if (!me.sub) return profileForm();
+  }
+  if (!view.loaded) return wait('Chargement des données…');
+  if (route === '/prof/ajout') return addPage();
+  if (route === '/prof/saisie') return quickPage();
+  if (route === '/prof/compte') return accountPage();
+  if (route === '/prof/equipe') return teamPage();
+  if (route === '/prof/stats') return statsPage();
+  if (route === '/prof/evaluations') return evalsPage();
+  if (route === '/prof/etablissement') return esPage();
+  if (route.startsWith('/prof/eleve/')) return sheetPage();
+  return dashPage();
+}
+
+/* ---------- Entrée par code personnel ---------- */
+function entryPage() {
+  const err = view.entryErr; view.entryErr = '';
+  return `<div class="card">
+    <h2>Espace des professeurs</h2>
+    <p class="lead">Entrez votre code d’entrée personnel, donné par la direction de l’établissement.</p>
+    <label for="ecode">Code d’entrée personnel</label>
+    <input type="password" id="ecode" class="full" data-f="ecode" autocomplete="off" autocapitalize="characters" value="${esc(view.ecode)}">
+    <p id="autherr" class="err" aria-live="polite">${esc(err)}</p>
+    <button class="btn block" data-a="enter">Entrer</button>
+  </div>`;
+}
+function setupAdminPage() {
+  const s = view.setup;
+  return `<div class="card">
+    <h2>Premier accès (mode essai)</h2>
+    <p class="lead">Créez le compte de l’administrateur. Il pourra ensuite créer un code d’entrée personnel pour chaque professeur.</p>
+    <label for="sname">Votre nom</label>
+    <input type="text" id="sname" class="full" data-f="sname" value="${esc(s.nom)}" autocomplete="off" placeholder="Ex. : Mme Diallo">
+    <label for="scode">Votre code d’entrée (6 lettres ou chiffres au moins)</label>
+    <input type="password" id="scode" class="full" data-f="scode" autocomplete="off" value="${esc(s.code)}">
+    <label for="scode2">Confirmer le code</label>
+    <input type="password" id="scode2" class="full" data-f="scode2" autocomplete="off" value="${esc(s.code2)}">
+    <p id="autherr" class="err" aria-live="polite"></p>
+    <button class="btn block" data-a="setupadmin">Créer le compte</button>
+  </div>`;
+}
+function infoPage(title, text, retry) {
+  return `<div class="card"><h2>${esc(title)}</h2><p>${esc(text)}</p>
+    <div class="row">${retry ? '<button class="btn" data-a="recheck">Réessayer</button>' : ''}<button class="btn alt" data-a="logout">Se déconnecter</button></div></div>`;
+}
+
+/* ---------- Profil : matière enseignée ---------- */
+function profileForm() {
+  const p = view.prof;
+  const selSub = p.sub || (data.subjects[0] ? data.subjects[0].id : '__new');
+  const isNew = selSub === '__new';
+  return `<div class="card"><h2>Bonjour, ${esc(me.nom)}</h2>
+    <p class="lead">Dernière étape : indiquez la matière que vous enseignez.</p>
+    ${!data.school && me.admin ? `<label for="pschool">Nom de l’établissement</label>
+      <input type="text" id="pschool" class="full" data-f="pschool" value="${esc(p.school)}" placeholder="Ex. : Collège Les Palmiers">` : ''}
+    <label for="psub">Matière enseignée</label>
+    <select id="psub" class="full" data-f="psub">
+      ${data.subjects.map(s => `<option value="${s.id}" ${selSub === s.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+      <option value="__new" ${isNew ? 'selected' : ''}>Une autre matière…</option>
+    </select>
+    ${isNew ? `<div class="form-grid">
+      <div><label for="pnew">Nom de la matière</label><input type="text" id="pnew" class="full" data-f="pnew" value="${esc(p.newSub)}" placeholder="Ex. : Physique-Chimie"></div>
+      <div><label for="pcoef">Coefficient</label><input type="number" id="pcoef" class="full" data-f="pcoef" min="1" max="10" value="${p.coef}"></div>
+    </div>` : ''}
+    <p id="autherr" class="err" aria-live="polite"></p>
+    <div class="row"><button class="btn" data-a="saveprofile">Continuer</button>
+    <button class="btn alt" data-a="logout">Se déconnecter</button></div></div>`;
+}
+function doProfile() {
+  const p = view.prof;
+  const sel = p.sub || (data.subjects[0] ? data.subjects[0].id : '__new');
+  let subId = sel;
+  if (sel === '__new') {
+    const sn = p.newSub.trim();
+    if (!sn) return authError('Saisissez le nom de la matière.');
+    let ex = data.subjects.find(s => s.name.toLowerCase() === sn.toLowerCase());
+    if (!ex) {
+      let id = slug(sn); while (data.subjects.some(s => s.id === id)) id += '-' + uid().slice(0, 3);
+      ex = {id, name: sn, coef: Math.max(1, Math.min(10, parseInt(p.coef) || 1))};
+      data.subjects.push(ex);
+    }
+    subId = ex.id;
+  }
+  if (!data.school && me.admin && p.school.trim()) data.school = p.school.trim();
+  bg(DB.config());
+  me.sub = subId;
+  if (ONLINE) {
+    bg(fdb.collection('autorises').doc(me.id).set({matiere: subId}, {merge: true}));
+    authState = 'ready';
+  } else {
+    const t = data.team.find(x => x.id === me.id);
+    if (t) { t.sub = subId; persist(); }
+  }
+  view.prof = newProf();
+  toast(`Bienvenue, ${me.nom}.`, 'ok');
+  navigate('/prof');
+}
+
+/* ---------- Tableau de bord ---------- */
+function ensureCls() {
+  const cl = classes();
+  if (!cl.find(c => c.key === view.tClass)) view.tClass = cl[0] ? cl[0].key : null;
+}
+function dashPage() {
+  const t = view.term, cl = classes();
+  ensureCls();
+  let list;
+  if (!cl.length) {
+    list = '<div class="empty">Vous n’avez pas encore d’élèves. Commencez par ajouter les noms de vos élèves.</div>';
+  } else {
+    const sts = classStudents(view.tClass).slice().sort(alpha);
+    list = `<div class="summary"><span>Moyenne de la classe<br><b>${esc(subName(me.sub))}</b></span>${ring(classSubAvg(view.tClass, me.sub, t), '')}</div>` +
+      sts.map(s => {
+        const n = notesOf(s, me.sub, t).length;
+        return `<button class="student" data-go="/prof/eleve/${s.id}">
+          ${avatar(s.name)}
+          <span class="who"><span class="name">${esc(s.name)}</span><span class="sub">${n} note${n > 1 ? 's' : ''} ce trimestre</span></span>
+          ${ring(subAvg(s, me.sub, t), '')}
+        </button>`;
+      }).join('');
+  }
+  return `
+    <div class="card">
+      <h2>Bonjour, ${esc(me.nom)}</h2>
+      <p class="lead">Matière : ${esc(subName(me.sub))}</p>
+      <div class="row">
+        <button class="btn" data-go="/prof/saisie">Saisir des notes</button>
+        <button class="btn alt" data-go="/prof/ajout">Ajouter des élèves</button>
+        <button class="btn alt" data-go="/prof/evaluations">Évaluations</button>
+        <button class="btn alt" data-go="/prof/stats">Statistiques</button>
+        ${me.admin ? '<button class="btn alt" data-go="/prof/equipe">Professeurs</button><button class="btn alt" data-go="/prof/etablissement">Établissement</button>' : ''}
+        <button class="btn alt" data-go="/prof/compte">Mon compte</button>
+      </div>
+    </div>
+    ${termBar()}
+    ${cl.length ? `<div class="chips" role="group" aria-label="Classe">${
+      cl.map(c => `<button data-a="tcls" data-v="${esc(c.key)}" class="${view.tClass === c.key ? 'on' : ''}">${esc(c.name)}</button>`).join('')}</div>` : ''}
+    ${list}`;
+}
+
+/* ---------- Ajouter des élèves ---------- */
+function classList() { return `<datalist id="classlist">${classes().map(c => `<option value="${esc(c.name)}"></option>`).join('')}</datalist>`; }
+function addPage() {
+  const a = view.add;
+  return `
+    ${backBtn('/prof')}
+    <div class="card">
+      <h2>Importer une liste</h2>
+      <p class="lead">La liste de votre classe est sur une feuille ou dans un fichier ? Prenez-la en photo ou choisissez le fichier : les noms sont lus et placés dans la zone ci-dessous pour que vous les vérifiiez.</p>
+      <input type="file" id="impfile" data-f="impfile" accept="image/*,.pdf,.docx,.xlsx,.xls,.csv,.txt">
+      <p id="impmsg" class="hint" aria-live="polite"></p>
+      ${a.photo ? `<img class="imp-photo" src="${a.photo}" alt="Photo de la liste importée">` : ''}
+      <p class="hint">Formats lus : photo, PDF, Word (.docx), Excel, CSV et texte. Une liste imprimée est bien mieux lue qu’une liste écrite à la main. Vérifiez toujours les noms avant d’ajouter.</p>
+    </div>
+    <div class="card">
+      <h2>Ajouter des élèves</h2>
+      <label for="acls">Classe</label>
+      <input type="text" id="acls" class="full" data-f="acls" list="classlist" value="${esc(a.cls)}" autocomplete="off" placeholder="Ex. : 6ème A">
+      ${classList()}
+      <p class="hint">Choisissez une classe existante ou tapez un nouveau nom : elle sera créée.</p>
+      <label for="anames">Noms des élèves (un par ligne)</label>
+      <textarea id="anames" class="full" data-f="anames" rows="8" placeholder="Koffi Aya&#10;Traoré Ibrahim&#10;Yao Marie-Ange">${esc(a.names)}</textarea>
+      <div class="row" style="margin-top:0"><button class="btn alt small" data-a="clearnames">Effacer la liste</button></div>
+      <p class="hint">Un élève déjà enregistré dans cette classe (par vous ou par un collègue) n’est pas créé deux fois : il garde le même code, valable pour tous ses professeurs. Les majuscules, accents et l’ordre nom et prénom sont ignorés.</p>
+      <p id="adderr" class="err" aria-live="polite"></p>
+      <button class="btn block" data-a="addstudents">Ajouter les élèves</button>
+    </div>`;
+}
+/* ---------- Import d'une liste de classe (photo, PDF, Word, Excel, texte) ---------- */
+const LIBS = {
+  mammoth: 'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js',
+  pdf: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
+  pdfWorker: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js',
+  xlsx: 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+  tess: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js'
+};
+const libCache = {};
+const loadLib = key => libCache[key] || (libCache[key] = loadScript(LIBS[key]).catch(e => { delete libCache[key]; throw e; }));
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+let importing = false;
+
+/* --- 1. Transformer un texte brut en liste de noms --- */
+const HEAD_RE = /^(?:n°|nº|n\.|(?:no|num|numéro|numero|matricule|nom|noms|prénom|prénoms|prenom|prenoms|sexe|genre|liste|effectif|total|année|annee|date|établissement|etablissement|collège|college|lycée|lycee|professeur|enseignant|signature|observations?|moyenne|rang|trimestre|ministère|ministere|république|republique|page)(?![\p{L}]))/iu;
+const NAME_RE = /^[\p{L}][\p{L}'’\- ]*$/u;
+
+function extractNames(text) {
+  const out = [], seen = new Set();
+  let cls = '';
+  text.replace(/\r/g, '').split('\n').forEach(raw => {
+    const line = raw.replace(/\u00a0/g, ' ').trim();
+    if (!line) return;
+    const cm = line.match(/classe\s*(?:de\s+|du\s+|des\s+)?[:\-–]?\s*(\S+(?:\s+[\p{L}0-9]{1,2}(?![\p{L}0-9]))?)/iu);
+    if (cm) { if (!cls) cls = cm[1].trim(); return; }
+    if (HEAD_RE.test(line)) return;
+    let toks = [];
+    line.split(/[\t;|,]+/).forEach(cell => {
+      toks.push(...cell.split(/\s+/).filter(Boolean)
+        .filter(t => !/\d/.test(t))
+        .map(t => t.replace(/^[^\p{L}]+|[^\p{L}]+$/gu, ''))
+        .filter(Boolean));
+    });
+    if (toks.length >= 3) toks = toks.filter(t => !/^[MFG]$/i.test(t));   // colonne « sexe »
+    const name = toks.join(' ');
+    if (name.length < 3 || name.length > 60 || toks.length > 6) return;
+    if (!NAME_RE.test(name) || !toks.some(t => t.replace(/[^\p{L}]/gu, '').length >= 3)) return;
+    const k = name.toLowerCase();
+    if (!seen.has(k)) { seen.add(k); out.push(name); }
+  });
+  return {names: out, cls};
+}
+
+/* --- 2. Reconnaître le type réel du fichier (sans se fier au nom ni au type déclaré) --- */
+async function sniff(file) {
+  const b = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+  const starts = (...a) => a.every((x, i) => b[i] === x);
+  if (starts(0x25, 0x50, 0x44, 0x46)) return 'pdf';
+  if (starts(0xFF, 0xD8, 0xFF) || starts(0x89, 0x50, 0x4E, 0x47) || starts(0x47, 0x49, 0x46, 0x38) || starts(0x42, 0x4D)
+      || (starts(0x52, 0x49, 0x46, 0x46) && b[8] === 0x57 && b[9] === 0x45)) return 'image';
+  if (b[4] === 0x66 && b[5] === 0x74 && b[6] === 0x79 && b[7] === 0x70) return 'heic';
+  if (starts(0x50, 0x4B, 0x03, 0x04)) return 'zip';
+  if (starts(0xD0, 0xCF, 0x11, 0xE0)) return 'ole';
+  return 'text';
+}
+
+/* --- 3. Word (.docx) et Excel (.xlsx) lus sans aucun téléchargement --- */
+async function inflateRaw(u8) {
+  const stream = new Blob([u8]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+async function unzip(buf, want) {
+  const u8 = new Uint8Array(buf), dv = new DataView(buf);
+  let e = u8.length - 22;
+  while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('zip');
+  const count = dv.getUint16(e + 10, true);
+  let p = dv.getUint32(e + 16, true);
+  const files = {};
+  for (let i = 0; i < count; i++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const nlen = dv.getUint16(p + 28, true), elen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
+    const off = dv.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nlen));
+    p += 46 + nlen + elen + clen;
+    if (!want(name)) continue;
+    const start = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true);
+    const data = u8.subarray(start, start + csize);
+    files[name] = method === 0 ? data : await inflateRaw(data);
+  }
+  return files;
+}
+function xmlDecode(s) {
+  return s.replace(/&#x([0-9a-f]+);/gi, (m, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (m, d) => String.fromCodePoint(+d))
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+}
+function docxToText(xml) {
+  const cellText = c => xmlDecode(c.replace(/<\/w:p>/g, ' ').replace(/<w:tab\/>/g, ' ').replace(/<w:br\/>/g, ' ').replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim();
+  let t = xml.replace(/<w:tr[ >][\s\S]*?<\/w:tr>/g, row => '\u0001' + row.split('</w:tc>').slice(0, -1).map(cellText).join('\t') + '\u0002');
+  t = t.replace(/<w:tab\/>/g, '\t').replace(/<w:br\/>/g, '\n').replace(/<\/w:p>/g, '\n').replace(/<[^>]+>/g, '');
+  return xmlDecode(t.replace(/\u0002/g, '\n').replace(/\u0001/g, ''));
+}
+function xlsxToText(files) {
+  const dec = u8 => new TextDecoder().decode(u8);
+  const sst = [];
+  if (files['xl/sharedStrings.xml']) {
+    (dec(files['xl/sharedStrings.xml']).match(/<si[ >][\s\S]*?<\/si>/g) || []).forEach(si => {
+      sst.push(xmlDecode((si.match(/<t[^>]*>[\s\S]*?<\/t>/g) || []).map(t => t.replace(/<[^>]+>/g, '')).join('')));
+    });
+  }
+  let out = '';
+  Object.keys(files).filter(n => /^xl\/worksheets\/sheet\d+\.xml$/.test(n)).sort().forEach(n => {
+    (dec(files[n]).match(/<row[ >][\s\S]*?<\/row>/g) || []).forEach(row => {
+      const cells = (row.match(/<c [^>]*\/>|<c[ >][\s\S]*?<\/c>/g) || []).map(c => {
+        const t = (c.match(/\bt="(\w+)"/) || [])[1], v = (c.match(/<v>([\s\S]*?)<\/v>/) || [])[1];
+        if (t === 's') return sst[+v] || '';
+        if (t === 'inlineStr') return xmlDecode((c.match(/<t[^>]*>[\s\S]*?<\/t>/g) || []).map(x => x.replace(/<[^>]+>/g, '')).join(''));
+        return v === undefined ? '' : xmlDecode(v);
+      });
+      if (cells.some(x => String(x).trim())) out += cells.join('\t') + '\n';
+    });
+  });
+  return out;
+}
+async function readOffice(file) {
+  const buf = await file.arrayBuffer();
+  let files = null;
+  try {
+    if (typeof DecompressionStream !== 'undefined')
+      files = await unzip(buf, n => n === 'word/document.xml' || n.startsWith('xl/'));
+  } catch (e) { console.error(e); }
+  if (files && files['word/document.xml']) return docxToText(new TextDecoder().decode(files['word/document.xml']));
+  if (files && Object.keys(files).some(n => n.startsWith('xl/worksheets/'))) return xlsxToText(files);
+  if (files && !files['word/document.xml']) throw new Error('format');
+  // Navigateur ancien : outils de secours téléchargés
+  try { await loadLib('mammoth'); return (await mammoth.extractRawText({arrayBuffer: buf})).value; }
+  catch (e) { return readSheet(file); }
+}
+async function readSheet(file) {
+  await loadLib('xlsx');
+  const wb = XLSX.read(await file.arrayBuffer(), {type: 'array'});
+  return wb.SheetNames.map(n => XLSX.utils.sheet_to_csv(wb.Sheets[n], {FS: ';'})).join('\n');
+}
+async function readText(file) {
+  const buf = await file.arrayBuffer();
+  try { return new TextDecoder('utf-8', {fatal: true}).decode(buf); }
+  catch (e) { return new TextDecoder('windows-1252').decode(buf); }
+}
+
+/* --- 4. Photos et PDF scannés : préparation de l'image puis lecture (OCR) --- */
+function loadImage(file) {
+  const url = URL.createObjectURL(file);
+  return new Promise((res, rej) => {
+    const i = new Image();
+    i.onload = () => { URL.revokeObjectURL(url); res(i); };
+    i.onerror = () => { URL.revokeObjectURL(url); rej(new Error('image')); };
+    i.src = url;
+  });
+}
+function toCanvas(img, maxSide) {
+  const k = Math.min(1, maxSide / Math.max(img.width, img.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+/* Seuil adaptatif (Bradley) : supprime les ombres et le fond d'une photo prise au téléphone */
+function binarizeData(g, w, h) {
+  const W = w + 1, integ = new Float64Array(W * (h + 1));
+  for (let y = 0; y < h; y++) {
+    let row = 0;
+    for (let x = 0; x < w; x++) { row += g[y * w + x]; integ[(y + 1) * W + x + 1] = integ[y * W + x + 1] + row; }
+  }
+  const half = Math.max(8, w >> 5), out = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    const y1 = Math.max(0, y - half), y2 = Math.min(h - 1, y + half);
+    for (let x = 0; x < w; x++) {
+      const x1 = Math.max(0, x - half), x2 = Math.min(w - 1, x + half);
+      const n = (x2 - x1 + 1) * (y2 - y1 + 1);
+      const sum = integ[(y2 + 1) * W + x2 + 1] - integ[y1 * W + x2 + 1] - integ[(y2 + 1) * W + x1] + integ[y1 * W + x1];
+      out[y * w + x] = g[y * w + x] * n < sum * 0.88 ? 0 : 255;
+    }
+  }
+  return out;
+}
+function grayOf(canvas) {
+  const w = canvas.width, h = canvas.height, d = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+  const g = new Uint8Array(w * h);
+  for (let i = 0, j = 0; i < d.length; i += 4, j++) g[j] = (d[i] * 299 + d[i + 1] * 587 + d[i + 2] * 114) / 1000;
+  return {g, w, h};
+}
+function canvasFromGray(g, w, h) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const ctx = c.getContext('2d'), im = ctx.createImageData(w, h);
+  for (let i = 0; i < w * h; i++) { im.data[4 * i] = im.data[4 * i + 1] = im.data[4 * i + 2] = g[i]; im.data[4 * i + 3] = 255; }
+  ctx.putImageData(im, 0, 0);
+  return c;
+}
+function stretchContrast(g) {
+  const hist = new Uint32Array(256); g.forEach(v => hist[v]++);
+  const n = g.length; let lo = 0, hi = 255, acc = 0;
+  for (let i = 0; i < 256; i++) { acc += hist[i]; if (acc > n * 0.02) { lo = i; break; } }
+  acc = 0;
+  for (let i = 255; i >= 0; i--) { acc += hist[i]; if (acc > n * 0.02) { hi = i; break; } }
+  const out = new Uint8Array(n), r = Math.max(1, hi - lo);
+  for (let i = 0; i < n; i++) out[i] = Math.max(0, Math.min(255, (g[i] - lo) * 255 / r));
+  return out;
+}
+const ocrProgress = msg => m => {
+  const p = Math.round((m.progress || 0) * 100), s = m.status || '';
+  if (s.includes('loading language')) msg(`Téléchargement de la langue française (première utilisation)… ${p} %`);
+  else if (s === 'recognizing text') msg(`Lecture en cours… ${p} %`);
+  else if (s.includes('loading') || s.includes('initializing')) msg('Préparation de l’outil de lecture…');
+};
+/* Deux essais (image nettoyée, puis image contrastée) : on garde celui qui trouve le plus de noms */
+async function ocrBest(canvas, msg) {
+  await loadLib('tess');
+  msg('Préparation de l’outil de lecture…');
+  const worker = await withTimeout(Tesseract.createWorker('fra', 1, {logger: ocrProgress(msg)}), 150000);
+  try {
+    const {g, w, h} = grayOf(canvas);
+    const passes = [['4', () => canvasFromGray(binarizeData(g, w, h), w, h)], ['6', () => canvasFromGray(stretchContrast(g), w, h)]];
+    let best = '', bestN = -1;
+    for (const [psm, make] of passes) {
+      await worker.setParameters({tessedit_pageseg_mode: psm});
+      const r = await withTimeout(worker.recognize(make()), 150000);
+      const n = extractNames(r.data.text).names.length;
+      if (n > bestN) { best = r.data.text; bestN = n; }
+      if (n >= 3) break;
+      msg('Deuxième essai de lecture…');
+    }
+    return best;
+  } finally { try { await worker.terminate(); } catch (e) {} }
+}
+async function readImageFile(file, msg) {
+  let img;
+  try { img = await loadImage(file); } catch (e) { throw new Error('image'); }
+  view.add.photo = toCanvas(img, 900).toDataURL('image/jpeg', 0.7);
+  render(); msg('Photo chargée. Lecture des noms…');
+  return ocrBest(toCanvas(img, 2000), msg);
+}
+async function readPdf(file, msg) {
+  await loadLib('pdf');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
+  const doc = await pdfjsLib.getDocument({data: await file.arrayBuffer()}).promise;
+  let text = '';
+  for (let p = 1; p <= doc.numPages; p++) {
+    const items = (await (await doc.getPage(p)).getTextContent()).items.filter(i => i.str && i.str.trim());
+    items.sort((a, b) => (b.transform[5] - a.transform[5]) || (a.transform[4] - b.transform[4]));
+    let y = null, line = '';
+    items.forEach(i => {
+      if (y !== null && Math.abs(i.transform[5] - y) > 3) { text += line + '\n'; line = ''; }
+      line += (line ? '\t' : '') + i.str; y = i.transform[5];
+    });
+    text += line + '\n';
+  }
+  if (extractNames(text).names.length) return text;
+  // PDF scanné (image) : lecture des premières pages comme des photos
+  let ocrText = '';
+  for (let p = 1; p <= Math.min(doc.numPages, 4); p++) {
+    msg(`PDF scanné : lecture de la page ${p}…`);
+    const page = await doc.getPage(p), vp = page.getViewport({scale: 2.2});
+    const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    await page.render({canvasContext: ctx, viewport: vp}).promise;
+    if (p === 1) { view.add.photo = toCanvas(c, 900).toDataURL('image/jpeg', 0.7); render(); }
+    ocrText += (await ocrBest(c, msg)) + '\n';
+  }
+  return ocrText;
+}
+
+/* --- 5. Point d'entrée : fichier choisi par le professeur --- */
+async function importFile(file) {
+  const msg = t => { const el = $('#impmsg'); if (el) el.textContent = t; };
+  if (importing) return msg('Une lecture est déjà en cours, patientez un instant.');
+  if (file.size > 15 * 1024 * 1024) return msg('Fichier trop volumineux (15 Mo maximum).');
+  importing = true;
+  try {
+    msg('Lecture du fichier…');
+    const kind = await sniff(file), name = (file.name || '').toLowerCase();
+    let text = '', visual = false;
+    if (kind === 'image' || kind === 'heic') { text = await readImageFile(file, msg); visual = true; }
+    else if (kind === 'pdf') { text = await readPdf(file, msg); visual = true; }
+    else if (kind === 'zip') text = await readOffice(file);
+    else if (kind === 'ole') {
+      if (name.endsWith('.xls')) text = await readSheet(file);
+      else return msg('Les anciens fichiers Word (.doc) ne sont pas lus. Ouvrez le document, enregistrez-le en .docx ou en PDF, puis réessayez.');
+    } else text = await readText(file);
+
+    const {names, cls} = extractNames(text), a = view.add;
+    if (!names.length) {
+      const raw = text.split('\n').map(l => l.replace(/[^\p{L}'’\- ]+/gu, ' ').replace(/\s+/g, ' ').trim()).filter(l => l.length >= 3).slice(0, 60);
+      if (raw.length && !a.names.trim()) {
+        a.names = raw.join('\n'); render();
+        return msg('Lecture imparfaite : le texte lu est placé dans la zone ci-dessous. Corrigez les noms en vous aidant de la photo, ou touchez « Effacer la liste » et saisissez-les à la main.');
+      }
+      render();
+      return msg(visual ? 'Aucun nom lisible trouvé. Reprenez la photo bien à plat et bien éclairée, ou saisissez les noms à la main en regardant la photo.' : 'Aucun nom trouvé dans ce fichier.');
+    }
+    const existing = a.names.split('\n').map(s => s.trim()).filter(Boolean);
+    const seen = new Set(existing.map(s => s.toLowerCase()));
+    names.forEach(n => { if (!seen.has(n.toLowerCase())) { seen.add(n.toLowerCase()); existing.push(n); } });
+    a.names = existing.join('\n');
+    if (!a.cls.trim() && cls) a.cls = cls;
+    render();
+    msg(`${names.length} nom${names.length > 1 ? 's' : ''} trouvé${names.length > 1 ? 's' : ''}${cls && a.cls === cls ? `, classe « ${cls} » détectée` : ''}. Vérifiez et corrigez la liste ci-dessous, puis touchez « Ajouter les élèves ».`);
+    const ta = $('#anames'); if (ta && ta.scrollIntoView) ta.scrollIntoView({behavior: 'smooth', block: 'center'});
+  } catch (e) {
+    console.error(e);
+    const m = String(e && e.message);
+    msg(m === 'timeout' ? 'La lecture a pris trop de temps (connexion lente ?). Réessayez, ou saisissez les noms à la main en regardant la photo.'
+      : m === 'image' ? 'Cette photo ne peut pas être ouverte (format HEIC ?). Prenez-la en JPEG, ou saisissez les noms à la main.'
+      : m === 'format' ? 'Ce type de document n’est pas pris en charge. Utilisez un fichier Word (.docx), Excel, PDF, une photo ou un texte.'
+      : /chargement|load/i.test(m) ? 'Impossible de charger l’outil de lecture. Vérifiez votre connexion internet.'
+      : 'La lecture automatique n’a pas abouti. Saisissez les noms à la main (la photo reste affichée pour vous aider).');
+  } finally { importing = false; }
+}
+
+function doAddStudents() {
+  const a = view.add, cls = canonCls(a.cls);
+  const names = a.names.split('\n').map(s => s.trim()).filter(Boolean);
+  const err = m => { const el = $('#adderr'); if (el) el.textContent = m; };
+  if (!cls) return err('Saisissez la classe.');
+  if (!names.length) return err('Saisissez au moins un nom d’élève.');
+  const created = [], linked = [], dupes = [], similar = [];
+  names.forEach(n => {
+    const key = nameKey(n);
+    if (created.some(c => nameKey(c.name) === key)) return;   // même nom saisi deux fois dans la liste
+    const same = classStudents(clsKey(cls)).find(s => nameKey(s.name) === key);
+    if (same) { dupes.push(same.name); if (linkTeacher(same)) linked.push(same); return; }
+    const other = data.students.find(s => nameKey(s.name) === key && clsKey(s.cls) !== clsKey(cls));
+    if (other) similar.push(`${other.name} (${other.cls})`);
+    const st = {id: uid(), name: n, cls, code: newCode(), notes: [], remarks: {}, teachers: {}};
+    linkTeacher(st);
+    data.students.push(st); created.push(st);
+  });
+  view.tClass = clsKey(cls);
+  view.add = {cls, names: '', photo: ''};
+  if (created.length) bg(DB.putStudents(created));
+  if (linked.length) bg(DB.setTeachers(linked));
+  if (created.length || linked.length) markDirty(clsKey(cls));
+  const pl = (n, w) => `${n} ${w}${n > 1 ? 's' : ''}`;
+  let msg = created.length ? `${pl(created.length, 'élève')} ajouté${created.length > 1 ? 's' : ''}` : 'Aucun nouvel élève';
+  if (dupes.length) msg += `. ${pl(dupes.length, 'élève')} ${dupes.length > 1 ? 'étaient déjà enregistrés' : 'était déjà enregistré'} : même code conservé, vous êtes ajouté(e) à ses professeurs`;
+  toast(msg + '.', 'ok');
+  if (similar.length) setTimeout(() => toast(`À vérifier : ${similar.slice(0, 2).join(', ')} existe déjà dans une autre classe.`), 3500);
+  navigate('/prof');
+}
+
+/* ---------- Saisie rapide : une évaluation pour toute la classe ---------- */
+function quickPage() {
+  const q = view.qe, cl = classes();
+  ensureCls();
+  if (!cl.find(c => c.key === q.cls)) q.cls = view.tClass;
+  if (!q.cls) return `${backBtn('/prof')}<div class="card"><h2>Saisir des notes</h2><div class="empty">Ajoutez d’abord vos élèves.</div><button class="btn" data-go="/prof/ajout">Ajouter des élèves</button></div>`;
+  const rows = classStudents(q.cls).slice().sort(alpha).map(s => `<div class="qrow">
+    ${avatar(s.name, 'sm')}<span class="name">${esc(s.name)}</span>
+    <input class="g" type="number" inputmode="decimal" min="0" max="20" step="0.25"
+      data-f="qv" data-sid="${s.id}" value="${esc(q.vals[s.id] || '')}" placeholder="/20" aria-label="Note de ${esc(s.name)}">
+  </div>`).join('');
+  return `
+    ${backBtn('/prof')}
+    <div class="card">
+      <h2>Saisir des notes</h2>
+      <p class="lead">Matière : ${esc(subName(me.sub))}. Une même évaluation pour toute la classe.</p>
+      ${termBar()}
+      <div class="form-grid">
+        <div><label for="qcls">Classe</label>
+          <select id="qcls" class="full" data-f="qcls">${cl.map(c => `<option value="${esc(c.key)}" ${c.key === q.cls ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></div>
+        <div><label for="qtype">Type</label>
+          <select id="qtype" class="full" data-f="qtype">${Object.entries(TYPES).map(([k, l]) => `<option value="${k}" ${k === q.type ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+        <div><label for="qdate">Date</label>
+          <input type="date" id="qdate" class="full" data-f="qdate" value="${esc(q.date)}"></div>
+      </div>
+    </div>
+    <div class="card">${rows}
+      <p class="hint">Laissez vide pour un élève absent. La touche Entrée passe à l’élève suivant.</p>
+    </div>
+    <p id="qerr" class="err" aria-live="polite"></p>
+    <button class="btn block" data-a="saveqe">Enregistrer les notes</button>`;
+}
+function doSaveQuick() {
+  const q = view.qe;
+  const err = msg => { const el = $('#qerr'); if (el) el.textContent = msg; };
+  if (document.querySelector('input.g.bad')) return err('Corrigez les notes en rouge : elles doivent être comprises entre 0 et 20.');
+  if (!q.date) return err('Choisissez la date de l’évaluation.');
+  const entries = [];
+  classStudents(q.cls).forEach(s => {
+    const p = parseMark(q.vals[s.id] || '');
+    if (p.v === undefined) return;
+    entries.push({st: s, note: {id: uid(), sub: me.sub, t: view.term, type: q.type, v: p.v, d: q.date, by: me.id, at: Date.now()}});
+  });
+  if (!entries.length) return err('Saisissez au moins une note.');
+  entries.forEach(e => e.st.notes.push(e.note));
+  const linked = entries.map(e => e.st).filter(linkTeacher);
+  q.vals = {};
+  bg(Promise.all([DB.addNotes(entries), linked.length ? DB.setTeachers(linked) : null])); markDirty(q.cls);
+  toast(`${entries.length} note${entries.length > 1 ? 's' : ''} enregistrée${entries.length > 1 ? 's' : ''}.`, 'ok');
+  render();
+}
+
+/* ---------- Fiche élève ---------- */
+function sheetPage() {
+  const st = data.students.find(s => s.id === route.split('/').pop());
+  if (!st) return `${backBtn('/prof')}<div class="empty">Cet élève n’existe plus.</div>`;
+  const t = view.term;
+  if (!view.ed || view.ed.id !== st.id) view.ed = {id: st.id, name: st.name, cls: st.cls};
+  const mine = notesOf(st, me.sub, t);
+  const rmKey = 't' + t + '_' + me.sub;
+  if (!view.rm || view.rm.sid !== st.id || view.rm.key !== rmKey) view.rm = {sid: st.id, key: rmKey, text: ((st.remarks || {})[rmKey] || {}).text || ''};
+  const others = st.notes.some(n => n.by !== me.id);
+  const noteRows = mine.map(n => `<div class="note-row">
+    ${noteChip(n)}${n.by === me.id
+      ? `<span class="date">${esc(TYPES[n.type])}, le <input type="date" class="datein" data-f="notedate" data-id="${n.id}" value="${esc(n.d)}" aria-label="Date de la note"></span>`
+      : `<span class="date">${esc(TYPES[n.type])}, ${fmtDate(n.d)}</span>`}
+    ${n.by === me.id ? `<button class="btn danger small" data-a="del" data-t="note" data-id="${n.id}">Supprimer</button>` : '<span class="hint">autre professeur</span>'}
+  </div>`).join('');
+  const nf = view.nf;
+  return `
+    ${backBtn('/prof')}
+    <div class="card hero-card">
+      ${avatar(st.name, 'lg')}
+      <div class="id"><h2>${esc(st.name)}</h2><p class="lead">${esc(st.cls)}</p></div>
+    </div>
+    <div class="code-box">
+      <div><span class="hint">Code à donner aux parents (le même pour tous les professeurs)</span><strong>${esc(showCode(st.code))}</strong></div>
+      <button class="btn small" data-a="copycode" data-code="${esc(st.code)}">Copier</button>
+    </div>
+    <p class="hint">Professeurs de cet élève : ${teacherList(st).map(x => `${esc(x.nom || 'professeur')} (${esc(subName(x.sub))})`).join(', ') || 'aucun pour le moment'}.</p>
+    ${termBar()}
+    <div class="card">
+      <div class="subj-top"><h2 style="margin:0;font-size:1.1rem">Notes en ${esc(subName(me.sub))}</h2>${ring(subAvg(st, me.sub, t), '')}</div>
+      ${noteRows || '<div class="empty">Aucune note pour ce trimestre.</div>'}
+    </div>
+    <div class="card">
+      <h2>Appréciation, trimestre ${t}</h2>
+      <p class="hint">Visible par les parents dans le bulletin, pour la matière ${esc(subName(me.sub))}.</p>
+      <div class="phrases">${RM_PHRASES.map((p, i) => `<button data-a="rmphrase" data-v="${i}">${esc(p.split(/[,:.]/)[0])}</button>`).join('')}</div>
+      <textarea class="full" data-f="rmtext" rows="3" maxlength="240" placeholder="Ex. : Bon travail, continuez ainsi.">${esc(view.rm.text)}</textarea>
+      <div class="row"><button class="btn alt" data-a="saveremark">Enregistrer l’appréciation</button></div>
+    </div>
+    <div class="card">
+      <h2>Ajouter une note</h2>
+      <div class="form-grid">
+        <div><label for="nftype">Type</label>
+          <select id="nftype" class="full" data-f="nftype">${Object.entries(TYPES).map(([k, l]) => `<option value="${k}" ${k === nf.type ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+        <div><label for="nfv">Note /20</label>
+          <input type="number" id="nfv" class="full" data-f="nfv" inputmode="decimal" min="0" max="20" step="0.25" value="${esc(nf.v)}"></div>
+        <div><label for="nfdate">Date</label>
+          <input type="date" id="nfdate" class="full" data-f="nfdate" value="${esc(nf.date)}"></div>
+      </div>
+      <p id="nferr" class="err" aria-live="polite"></p>
+      <button class="btn block" data-a="addnote">Ajouter la note</button>
+    </div>
+    <div class="card">
+      <h2>Modifier l’élève</h2>
+      <label for="ename">Nom</label>
+      <input type="text" id="ename" class="full" data-f="ename" value="${esc(view.ed.name)}">
+      <label for="ecls">Classe</label>
+      <input type="text" id="ecls" class="full" data-f="ecls" list="classlist" value="${esc(view.ed.cls)}">
+      ${classList()}
+      <p id="ederr" class="err" aria-live="polite"></p>
+      <div class="row">
+        <button class="btn alt" data-a="saveident">Enregistrer</button>
+        ${others ? '' : `<button class="btn danger" data-a="del" data-t="student" data-id="${st.id}">Supprimer l’élève</button>`}
+      </div>
+      ${others ? '<p class="hint">Cet élève a des notes d’autres professeurs : il ne peut pas être supprimé ici.</p>' : ''}
+    </div>`;
+}
+function doAddNote() {
+  const st = data.students.find(s => s.id === route.split('/').pop()), nf = view.nf;
+  const err = msg => { const el = $('#nferr'); if (el) el.textContent = msg; };
+  const p = parseMark(nf.v);
+  if (p.empty) return err('Saisissez la note.');
+  if (p.bad) return err('La note doit être comprise entre 0 et 20.');
+  if (!nf.date) return err('Choisissez la date.');
+  const note = {id: uid(), sub: me.sub, t: view.term, type: nf.type, v: p.v, d: nf.date, by: me.id, at: Date.now()};
+  st.notes.push(note);
+  const wasLinked = linkTeacher(st);
+  nf.v = '';
+  bg(Promise.all([DB.addNotes([{st, note}]), wasLinked ? DB.setTeachers([st]) : null])); markDirty(clsKey(st.cls));
+  toast('Note ajoutée.', 'ok');
+  render();
+  const f = $('#nfv'); if (f) f.focus();
+}
+function doSaveIdent() {
+  const st = data.students.find(s => s.id === route.split('/').pop());
+  const name = view.ed.name.trim(), cls = canonCls(view.ed.cls);
+  const err = msg => { const el = $('#ederr'); if (el) el.textContent = msg; };
+  if (!name || !cls) return err('Saisissez le nom et la classe.');
+  if (classStudents(clsKey(cls)).some(s => s.id !== st.id && nameKey(s.name) === nameKey(name))) return err('Un élève porte déjà ce nom dans cette classe.');
+  const oldKey = clsKey(st.cls);
+  st.name = name; st.cls = cls;
+  view.ed = null;
+  bg(DB.updateStudent(st)); markDirty(oldKey, clsKey(cls));
+  toast('Élève mis à jour.', 'ok');
+  render();
+}
+
+/* ---------- Calendrier des évaluations (professeurs) ---------- */
+function evalsPage() {
+  const back = backBtn('/prof'), cl = classes();
+  ensureCls();
+  if (!cl.length) return `${back}<div class="empty">Ajoutez d’abord vos élèves.</div>`;
+  const e = view.ev;
+  if (!cl.find(c => c.key === e.cls)) e.cls = view.tClass;
+  if (!e.t) e.t = view.term;
+  const today = todayStr();
+  const all = data.evals.slice().sort((a, b) => a.date.localeCompare(b.date));
+  const up = all.filter(x => x.date >= today), past = all.filter(x => x.date < today).reverse().slice(0, 20);
+  const same = e.date ? data.evals.filter(x => x.date === e.date && clsKey(x.cls) === e.cls) : [];
+  const row = x => `<div class="evrow ${x.date < today ? 'past' : ''}">${dateBox(x.date)}
+    <div class="evinfo">
+      <div><b>${esc(x.title || evLabel(x))}</b> <span class="nt ${x.type}">${x.type === 'D' ? 'Devoir' : 'Interro.'}</span></div>
+      <span class="hint">${esc(x.cls)}, ${esc(subName(x.sub))}${x.nom ? ', ' + esc(x.nom) : ''}, trimestre ${x.t}. ${esc(whenText(daysUntil(x.date)))}.</span>
+      <div class="row" style="margin:6px 0 0">
+        ${x.by === me.id ? `<button class="btn small" data-a="evnotes" data-id="${x.id}">Saisir les notes</button>` : ''}
+        ${x.by === me.id || me.admin ? `<button class="btn danger small" data-a="del" data-t="eval" data-id="${x.id}">Supprimer</button>` : ''}
+      </div>
+    </div></div>`;
+  return `
+    ${back}
+    <div class="card">
+      <h2>Planifier une évaluation</h2>
+      <p class="lead">Matière : ${esc(subName(me.sub))}. Les parents de la classe voient la date dans le menu de leur enfant.</p>
+      <div class="form-grid">
+        <div><label for="evcls">Classe</label>
+          <select id="evcls" class="full" data-f="evcls">${cl.map(c => `<option value="${esc(c.key)}" ${c.key === e.cls ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></div>
+        <div><label for="evtype">Type</label>
+          <select id="evtype" class="full" data-f="evtype">${Object.entries(TYPES).map(([k, l]) => `<option value="${k}" ${k === e.type ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+        <div><label for="evdate">Date</label>
+          <input type="date" id="evdate" class="full" data-f="evdate" value="${esc(e.date)}"></div>
+        <div><label for="evt">Trimestre</label>
+          <select id="evt" class="full" data-f="evt">${TERMS.map(t => `<option value="${t}" ${+e.t === t ? 'selected' : ''}>Trimestre ${t}</option>`).join('')}</select></div>
+      </div>
+      <label for="evtitle">Sujet ou chapitre (facultatif)</label>
+      <input type="text" id="evtitle" class="full" data-f="evtitle" maxlength="80" value="${esc(e.title)}" placeholder="Ex. : Les fractions, chapitre 3">
+      ${same.length ? `<p class="hint" style="color:var(--accent)"><b>Attention :</b> ${same.length > 1 ? 'd’autres évaluations sont déjà prévues' : 'une autre évaluation est déjà prévue'} ce jour-là pour cette classe (${same.map(x => esc(subName(x.sub))).join(', ')}).</p>` : ''}
+      <p id="everr" class="err" aria-live="polite"></p>
+      <button class="btn block" data-a="planeval">Planifier l’évaluation</button>
+    </div>
+    <div class="card"><h2>À venir</h2>${up.length ? up.map(row).join('') : '<p class="hint">Aucune évaluation prévue.</p>'}</div>
+    ${past.length ? `<div class="card faq"><details><summary>Évaluations passées (${past.length})</summary>${past.map(row).join('')}</details></div>` : ''}`;
+}
+function doAddEval() {
+  const e = view.ev, err = m => { const el = $('#everr'); if (el) el.textContent = m; };
+  const c = classes().find(x => x.key === e.cls);
+  if (!c) return err('Choisissez la classe.');
+  if (!e.date) return err('Choisissez la date de l’évaluation.');
+  const ev = {id: uid(), cls: c.name, sub: me.sub, by: me.id, nom: me.nom, type: e.type, date: e.date, title: e.title.trim().slice(0, 80), t: +e.t || view.term, at: Date.now()};
+  data.evals.push(ev);
+  view.ev = {...e, title: '', date: ''};
+  bg(DB.putEval(ev)); markDirty(c.key);
+  toast('Évaluation planifiée : les parents de la classe peuvent la voir.', 'ok');
+  render();
+}
+function openEvalNotes(id) {
+  const ev = data.evals.find(x => x.id === id);
+  if (!ev) return;
+  view.tClass = clsKey(ev.cls);
+  view.term = ev.t || view.term;
+  view.qe = {cls: clsKey(ev.cls), type: ev.type, date: ev.date, vals: {}};
+  navigate('/prof/saisie');
+}
+function doChangeNoteDate(id, value) {
+  const st = data.students.find(s => s.notes.some(n => n.id === id));
+  const n = st && st.notes.find(x => x.id === id);
+  if (!n || n.by !== me.id || !value || value === n.d) return;
+  n.d = value;
+  bg(DB.updateNote(st, n)); markDirty(clsKey(st.cls));
+  toast('Date de la note modifiée.', 'ok'); render();
+}
+
+/* ---------- Appréciation du professeur (visible par les parents) ---------- */
+const RM_PHRASES = [
+  'Bon travail, continuez ainsi.',
+  'Résultats satisfaisants, des efforts à poursuivre.',
+  'Peut mieux faire : plus de régularité est nécessaire.',
+  'Élève sérieux et participatif.',
+  'Résultats insuffisants : un travail personnel est indispensable.',
+  'Excellent trimestre, félicitations.'
+];
+function doSaveRemark() {
+  const st = data.students.find(s => s.id === route.split('/').pop());
+  if (!st || !view.rm) return;
+  const text = view.rm.text.trim().slice(0, 240);
+  st.remarks = st.remarks || {};
+  if (text) st.remarks[view.rm.key] = {text, by: me.id}; else delete st.remarks[view.rm.key];
+  bg(DB.setRemark(st, view.rm.key, text ? {text, by: me.id} : null)); markDirty(clsKey(st.cls));
+  toast(text ? 'Appréciation enregistrée.' : 'Appréciation supprimée.', 'ok');
+  render();
+}
+
+/* ---------- Statistiques de classe ---------- */
+function computeStats(avgs) {
+  if (!avgs.length) return null;
+  const b = [0, 0, 0, 0];
+  avgs.forEach(a => { b[a < 5 ? 0 : a < 10 ? 1 : a < 15 ? 2 : 3]++; });
+  return {n: avgs.length, mean: mean(avgs), min: Math.min(...avgs), max: Math.max(...avgs),
+    pass: Math.round(avgs.filter(a => a >= 10).length / avgs.length * 100), buckets: b};
+}
+function statsPage() {
+  const back = backBtn('/prof'), cl = classes();
+  ensureCls();
+  if (!cl.length) return `${back}<div class="empty">Ajoutez d’abord des élèves.</div>`;
+  if (!data.subjects.find(s => s.id === view.statSub)) view.statSub = data.subjects.find(s => s.id === me.sub) ? me.sub : (data.subjects[0] ? data.subjects[0].id : null);
+  const t = view.term, key = view.tClass, sub = view.statSub;
+  const sts = classStudents(key).slice().sort(alpha);
+  const rows = sts.map(s => ({s, a: subAvg(s, sub, t)})).filter(x => x.a !== null);
+  const st = computeStats(rows.map(r => r.a));
+  const labels = ['Moins de 5', '5 à moins de 10', '10 à moins de 15', '15 et plus'];
+  const line = (r, extra) => `<button class="student" data-go="/prof/eleve/${r.s.id}">${avatar(r.s.name)}
+      <span class="who"><span class="name">${esc(r.s.name)}</span>${extra ? `<span class="sub">${extra}</span>` : ''}</span>${ring(r.a, '')}</button>`;
+  const low = rows.filter(r => r.a < 10).sort((a, b) => a.a - b.a);
+  const top = rows.slice().sort((a, b) => b.a - a.a).slice(0, 3);
+  const gen = sts.map(s => ({s, a: genAvg(s, t)})).filter(x => x.a !== null).sort((a, b) => b.a - a.a);
+  return `
+    ${back}
+    <div class="card">
+      <h2>Statistiques de la classe</h2>
+      <div class="chips no-print" role="group" aria-label="Classe">${cl.map(c => `<button data-a="tcls" data-v="${esc(c.key)}" class="${key === c.key ? 'on' : ''}">${esc(c.name)}</button>`).join('')}</div>
+      <div class="no-print">${termBar()}</div>
+      <label for="statsub">Matière</label>
+      <select id="statsub" class="full" data-f="statsub">${data.subjects.map(s => `<option value="${s.id}" ${s.id === sub ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select>
+    </div>
+    ${st ? `<div class="stats">
+      <div class="stat"><b>${fmt(st.mean)}</b><span>moyenne de la classe</span></div>
+      <div class="stat"><b>${fmt(st.min)}</b><span>moyenne la plus basse</span></div>
+      <div class="stat"><b>${fmt(st.max)}</b><span>moyenne la plus haute</span></div>
+      <div class="stat"><b>${st.pass} %</b><span>élèves à 10 ou plus</span></div>
+    </div>
+    <div class="card"><h2>Répartition des moyennes</h2>
+      ${st.buckets.map((c, i) => `<div class="bar-line"><span class="lbl wide">${labels[i]}</span><span class="track ${i < 2 ? 'cl' : 'me'}"><i style="--w:${Math.round(c / st.n * 100)}%"></i></span><b>${c}</b></div>`).join('')}
+      <p class="hint">${st.n} élève${st.n > 1 ? 's' : ''} avec au moins une note dans cette matière.</p>
+    </div>
+    <div class="card"><h2>À surveiller (moins de 10)</h2>${low.length ? low.map(r => line(r)).join('') : '<p class="hint">Aucun élève en dessous de 10.</p>'}</div>
+    <div class="card"><h2>Meilleurs résultats</h2>${top.map(r => line(r)).join('')}</div>`
+    : '<div class="empty">Aucune note dans cette matière pour ce trimestre.</div>'}
+    <div class="card"><h2>Classement général de la classe</h2>
+      ${gen.length ? gen.map((r, i) => `<div class="qrow"><span class="pos">${i + 1}</span>${avatar(r.s.name, 'sm')}<span class="name">${esc(r.s.name)}</span>${ring(r.a, '')}</div>`).join('')
+        : '<p class="hint">Aucune moyenne générale pour le moment.</p>'}
+      <p class="hint">Toutes les matières, pondérées par leur coefficient.</p>
+    </div>
+    <div class="row no-print">
+      <button class="btn" data-a="csv">Exporter la classe en CSV</button>
+      <button class="btn alt" data-a="print">Imprimer</button>
+    </div>`;
+}
+function classCsv(key, t) {
+  const num = x => x === null ? '' : String(Math.round(x * 100) / 100).replace('.', ',');
+  const rows = [['Élève', ...data.subjects.map(s => s.name), 'Moyenne générale', 'Rang']];
+  classStudents(key).slice().sort(alpha).forEach(s => {
+    const r = rank(s, t);
+    rows.push([s.name, ...data.subjects.map(sub => num(subAvg(s, sub.id, t))), num(genAvg(s, t)), r ? r.r + '/' + r.n : '']);
+  });
+  return '\uFEFF' + rows.map(r => r.map(x => `"${String(x).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+}
+function downloadText(name, text, mime) {
+  const url = URL.createObjectURL(new Blob([text], {type: mime}));
+  const a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+function exportClassCsv() {
+  ensureCls();
+  if (!view.tClass) return;
+  downloadText(`classe-${slug(className(view.tClass))}-trimestre-${view.term}.csv`, classCsv(view.tClass, view.term), 'text/csv;charset=utf-8');
+  toast('Fichier CSV préparé.', 'ok');
+}
+const className = key => (classes().find(c => c.key === key) || {name: 'classe'}).name;
+
+/* ---------- Établissement : informations, annonces, sauvegarde, nouvelle année ---------- */
+function esPage() {
+  const back = backBtn('/prof');
+  if (!me.admin) return `${back}<div class="empty">Cette page est réservée à l’administrateur.</div>`;
+  if (!view.es) view.es = {school: data.school || '', year: data.year || '', phone: data.phone || '', address: data.address || ''};
+  const e = view.es, nw = view.nw, ny = view.ny;
+  return `
+    ${back}
+    <div class="card">
+      <h2>Informations de l’établissement</h2>
+      <p class="lead">Visibles par les parents dans la page Infos.</p>
+      <label for="esch">Nom de l’établissement</label>
+      <input type="text" id="esch" class="full" data-f="esch" value="${esc(e.school)}">
+      <label for="esyear">Année scolaire</label>
+      <input type="text" id="esyear" class="full" data-f="esyear" value="${esc(e.year)}" placeholder="Ex. : 2026-2027">
+      <label for="esphone">Téléphone</label>
+      <input type="text" id="esphone" class="full" data-f="esphone" inputmode="tel" value="${esc(e.phone)}" placeholder="Ex. : 01 01 85 74 51">
+      <label for="esaddr">Adresse</label>
+      <input type="text" id="esaddr" class="full" data-f="esaddr" value="${esc(e.address)}" placeholder="Ex. : Bingerville, quartier ...">
+      <div class="row"><button class="btn" data-a="savees">Enregistrer</button></div>
+    </div>
+    <div class="card">
+      <h2>Annonces pour les parents</h2>
+      <label for="nwtitle">Titre</label>
+      <input type="text" id="nwtitle" class="full" data-f="nwtitle" maxlength="80" value="${esc(nw.title)}" placeholder="Ex. : Conseil de classe du 1er trimestre">
+      <label for="nwtext">Message (facultatif)</label>
+      <textarea id="nwtext" class="full" data-f="nwtext" rows="3" maxlength="400">${esc(nw.text)}</textarea>
+      <label for="nwdate">Date concernée (facultatif)</label>
+      <input type="date" id="nwdate" class="full" data-f="nwdate" value="${esc(nw.date)}">
+      <p id="nwerr" class="err" aria-live="polite"></p>
+      <button class="btn" data-a="addnews">Publier l’annonce</button>
+      ${sortedNews(data).map(n => `<div class="note-row">
+        <span class="date" style="min-width:140px"><b style="color:var(--text)">${esc(n.title)}</b>${n.date ? '<br>' + esc(fmtDateLong(n.date)) : ''}</span>
+        <button class="btn danger small" data-a="del" data-t="news" data-id="${n.id}">Supprimer</button></div>`).join('')}
+    </div>
+    <div class="card">
+      <h2>Sauvegarde</h2>
+      <p class="hint">Télécharge un fichier avec les élèves, notes, appréciations, matières et annonces. Les codes d’accès des professeurs n’y sont pas.</p>
+      <div class="row"><button class="btn alt" data-a="backup">Sauvegarder les données</button></div>
+      ${ONLINE ? '' : `<label for="restorefile">Restaurer une sauvegarde</label>
+        <input type="file" id="restorefile" data-f="restorefile" accept=".json,application/json">
+        ${view.restore ? `<p class="hint">Sauvegarde trouvée : ${esc(view.restore.summary)}. Elle remplacera les données actuelles.</p>
+        <div class="row"><button class="btn danger" data-a="confirmrestore">Restaurer et remplacer</button><button class="btn alt" data-a="cancelrestore">Annuler</button></div>` : ''}`}
+    </div>
+    <div class="card">
+      <h2>Nouvelle année scolaire</h2>
+      <p class="hint">Efface toutes les notes et appréciations, et conserve les classes, élèves, matières et codes. Faites d’abord une sauvegarde.</p>
+      <label for="nyyear">Nouvelle année scolaire</label>
+      <input type="text" id="nyyear" class="full" data-f="nyyear" value="${esc(ny.year)}" placeholder="Ex. : 2027-2028">
+      <label for="nyconf">Tapez EFFACER pour confirmer</label>
+      <input type="text" id="nyconf" class="full" data-f="nyconf" value="${esc(ny.confirm)}" autocomplete="off">
+      <p id="nyerr" class="err" aria-live="polite"></p>
+      <button class="btn danger" data-a="newyear">Commencer la nouvelle année</button>
+    </div>`;
+}
+function doSaveEs() {
+  const e = view.es;
+  data.school = e.school.trim(); data.year = e.year.trim(); data.phone = e.phone.trim(); data.address = e.address.trim();
+  bg(DB.config()); publishPublic(); classes().forEach(c => markDirty(c.key));
+  toast('Informations enregistrées.', 'ok'); render();
+}
+function doAddNews() {
+  const nw = view.nw, title = nw.title.trim();
+  if (!title) { const el = $('#nwerr'); if (el) el.textContent = 'Saisissez le titre de l’annonce.'; return; }
+  data.news.unshift({id: uid(), title, text: nw.text.trim(), date: nw.date || '', at: Date.now()});
+  data.news = data.news.slice(0, 30);
+  view.nw = {title: '', text: '', date: ''};
+  bg(DB.config()); publishPublic();
+  toast('Annonce publiée.', 'ok'); render();
+}
+function backupObject() {
+  return {app: 'carnet-de-notes', version: 2, exported: new Date().toISOString(),
+    data: {school: data.school, year: data.year, phone: data.phone, address: data.address, news: data.news, evals: data.evals, subjects: data.subjects, students: data.students}};
+}
+function exportBackup() {
+  downloadText(`sauvegarde-carnet-${todayStr()}.json`, JSON.stringify(backupObject()), 'application/json');
+  toast('Sauvegarde téléchargée.', 'ok');
+}
+async function readRestore(file) {
+  try {
+    const obj = JSON.parse(await readText(file)), d = obj && obj.data;
+    if (!d || obj.app !== 'carnet-de-notes' || !Array.isArray(d.students) || !Array.isArray(d.subjects)) throw new Error('bad');
+    view.restore = {data: d, summary: `${d.students.length} élève${d.students.length > 1 ? 's' : ''}, ${d.subjects.length} matière${d.subjects.length > 1 ? 's' : ''}, faite le ${new Date(obj.exported).toLocaleDateString('fr-FR')}`};
+  } catch (e) { view.restore = null; toast('Ce fichier n’est pas une sauvegarde valide.', 'err'); }
+  render();
+}
+function doRestore() {
+  if (ONLINE || !view.restore) return;
+  const d = view.restore.data, keep = data.team;
+  data = {school: d.school || '', year: d.year || '', phone: d.phone || '', address: d.address || '', news: d.news || [], evals: d.evals || [],
+    subjects: d.subjects, students: d.students.map(s => ({...s, notes: s.notes || [], remarks: s.remarks || {}})), team: keep};
+  if (me && !data.subjects.find(s => s.id === me.sub)) me.sub = '';
+  persist(); view.restore = null; view.es = null;
+  toast('Sauvegarde restaurée.', 'ok'); render();
+}
+function doNewYear() {
+  const y = view.ny.year.trim(), err = m => { const el = $('#nyerr'); if (el) el.textContent = m; };
+  if (!y) return err('Saisissez la nouvelle année scolaire (par exemple 2027-2028).');
+  if (view.ny.confirm.trim().toUpperCase() !== 'EFFACER') return err('Tapez EFFACER pour confirmer.');
+  data.students.forEach(s => { s.notes = []; s.remarks = {}; });
+  const oldEvals = data.evals; data.evals = [];
+  data.year = y; view.ny = {year: '', confirm: ''}; view.es = null;
+  bg(Promise.all([DB.resetYear(data.students), DB.deleteEvals(oldEvals), DB.config()]));
+  publishPublic(); classes().forEach(c => markDirty(c.key));
+  toast(`Année ${y} commencée : notes effacées.`, 'ok'); render();
+}
+
+/* ---------- Mon compte ---------- */
+function accountPage() {
+  return `
+    ${backBtn('/prof')}
+    <div class="card">
+      <h2>Mon compte</h2>
+      <div class="hero-card" style="margin:8px 0">${avatar(me.nom)}
+        <div class="id"><b>${esc(me.nom)}</b><p class="lead" style="margin:0">${esc(subName(me.sub))}${me.admin ? ', administrateur' : ''}</p></div></div>
+    </div>
+    ${ONLINE ? `<div class="card">
+      <h2>Bulletins des parents</h2>
+      <p class="hint">Les bulletins se mettent à jour automatiquement. Si des parents voient d’anciennes notes, republiez-les.</p>
+      <div class="row"><button class="btn alt" data-a="republish">Republier tous les bulletins</button></div>
+    </div>` : ''}
+    <button class="btn danger block" data-a="logout">Se déconnecter</button>`;
+}
+
+/* ---------- Gestion des professeurs (administrateur) ---------- */
+async function loadTeam() {
+  const t = view.team;
+  try {
+    const [inv, aut] = await Promise.all([fdb.collection('invitations').get(), fdb.collection('autorises').get()]);
+    const active = new Set(aut.docs.map(d => d.data().code));
+    t.items = inv.docs.map(d => ({code: d.id, nom: d.data().nom || '', admin: d.data().admin === true, active: active.has(d.id)}))
+      .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+    t.err = '';
+  } catch (e) { console.error(e); t.err = 'Impossible de charger la liste des professeurs.'; }
+  t.loaded = true; t.loading = false;
+  render();
+}
+function teamItems() {
+  return ONLINE ? view.team.items : data.team.map(x => ({code: x.code, nom: x.nom, admin: x.admin, active: !!x.used}));
+}
+function teamPage() {
+  const t = view.team;
+  if (!me.admin) return `${backBtn('/prof')}<div class="empty">Cette page est réservée à l’administrateur.</div>`;
+  if (ONLINE && !t.loaded) {
+    if (!t.loading) { t.loading = true; loadTeam(); }
+    return `${backBtn('/prof')}${wait('Chargement…')}`;
+  }
+  const rows = teamItems().map(x => `<div class="note-row">
+    ${avatar(x.nom || '?', 'sm')}
+    <span class="date" style="min-width:130px"><b style="color:var(--text)">${esc(x.nom || '(sans nom)')}</b><br><span class="mono">${esc(showTeacherCode(x.code))}</span></span>
+    ${x.admin ? '<span class="pill small">Admin</span>' : `<span class="pill small ${x.active ? '' : 'warn'}">${x.active ? 'Actif' : 'En attente'}</span>`}
+    <button class="btn alt small" data-a="copyteacher" data-code="${esc(x.code)}">Copier</button>
+    ${x.code === me.code ? '' : `<button class="btn danger small" data-a="del" data-t="teacher" data-id="${esc(x.code)}">Retirer</button>`}
+  </div>`).join('');
+  return `
+    ${backBtn('/prof')}
+    <div class="card">
+      <h2>Ajouter un professeur</h2>
+      <p class="lead">Chaque professeur reçoit un code d’entrée personnel. Donnez-le lui directement.</p>
+      <label for="tname">Nom du professeur</label>
+      <div class="row" style="margin-top:0">
+        <input type="text" id="tname" data-f="tname" value="${esc(t.name)}" autocomplete="off" placeholder="Ex. : M. Koné" style="flex:1; min-width:150px">
+        <button class="btn" data-a="addteacher">Créer le code</button>
+      </div>
+      <p id="terr" class="err" aria-live="polite">${esc(t.err || '')}</p>
+    </div>
+    <div class="card">
+      <h2>Professeurs de l’établissement</h2>
+      ${rows || '<div class="empty">Aucun professeur.</div>'}
+      <p class="hint">Retirer un professeur coupe son accès immédiatement. Ses notes déjà saisies sont conservées.</p>
+    </div>`;
+}
+async function doAddTeacher() {
+  const t = view.team, nom = t.name.trim();
+  const err = m => { const el = $('#terr'); if (el) el.textContent = m; };
+  if (!nom) return err('Saisissez le nom du professeur.');
+  const code = newTeacherCode(teamItems().map(x => x.code));
+  if (ONLINE) {
+    try { await fdb.collection('invitations').doc(code).set({nom, admin: false}); }
+    catch (e) { console.error(e); return err('Création impossible. Vérifiez la connexion.'); }
+    t.loaded = false;
+  } else {
+    data.team.push({id: uid(), nom, code, admin: false, sub: '', used: false}); persist();
+  }
+  t.name = '';
+  toast(`Code créé pour ${nom} : ${showTeacherCode(code)}`, 'ok');
+  render();
+}
+
+/* =====================================================================
+   8. GUIDE D'INSTALLATION
+   ===================================================================== */
+const RULES = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function signed() { return request.auth != null; }
+    function meDoc() {
+      return /databases/$(db)/documents/autorises/$(request.auth.uid);
+    }
+    function inv(code) {
+      return /databases/$(db)/documents/invitations/$(code);
+    }
+    // Un professeur est autorisé tant que son code existe dans « invitations »
+    function allowed() {
+      return signed() && exists(meDoc()) && exists(inv(get(meDoc()).data.code));
+    }
+    function isAdmin() {
+      return allowed() && get(inv(get(meDoc()).data.code)).data.admin == true;
+    }
+
+    match /invitations/{code} {
+      allow get: if true;
+      allow list, create, update, delete: if isAdmin();
+    }
+    match /autorises/{uid} {
+      allow get: if signed() && request.auth.uid == uid;
+      allow list: if isAdmin();
+      allow create: if signed() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['code','nom'])
+        && exists(inv(request.resource.data.code));
+      allow update: if allowed() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['matiere']);
+    }
+    // Informations publiques (annonces, contact) : lisibles par les parents
+    match /public/{doc} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if isAdmin();
+    }
+    // Calendrier des évaluations : chaque professeur gère les siennes
+    match /evaluations/{id} {
+      allow read: if allowed();
+      allow create: if allowed() && request.resource.data.by == request.auth.uid;
+      allow update, delete: if allowed() && (resource.data.by == request.auth.uid || isAdmin());
+    }
+    match /config/{doc}  { allow read, write: if allowed(); }
+    match /eleves/{id}   { allow read, write: if allowed(); }
+    match /bulletins/{code} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if allowed();
+    }
+  }
+}`;
+
+function helpPage() {
+  return `
+    <div class="card">
+      <h2>Guide d’installation</h2>
+      <p>${ONLINE ? 'Cette application est <b>connectée à Firebase</b>.' : 'Cette application est en <b>mode essai</b> : elle fonctionne, mais seulement sur cet appareil.'}
+      Pour que les parents voient les notes sur leur propre téléphone, suivez ces étapes (environ 15 minutes, gratuit pour un usage scolaire normal).</p>
+      <ol class="steps">
+        <li>Sur <b>console.firebase.google.com</b>, créez un projet.</li>
+        <li><b>Authentication</b> : activez la méthode « E-mail/Mot de passe » (utilisée en interne, aucun e-mail n’est envoyé).</li>
+        <li><b>Firestore Database</b> : créez la base (mode production).</li>
+        <li>Onglet <b>Règles</b> de Firestore : remplacez tout par les règles ci-dessous, puis publiez.</li>
+        <li><b>Paramètres du projet</b>, puis « Vos applications » : ajoutez une application Web et copiez les 4 valeurs (apiKey, authDomain, projectId, appId).</li>
+        <li>Ouvrez le fichier <span class="mono">carnet-de-notes.html</span> dans un éditeur de texte et collez ces valeurs dans <span class="mono">FIREBASE_CONFIG</span>, tout en haut du script (ou dans <span class="mono">config.js</span> si vous utilisez le dossier d’installation fourni).</li>
+        <li>Mettez le fichier en ligne avec <b>Firebase Hosting</b> (renommez-le <span class="mono">index.html</span>).</li>
+        <li><b>Créez le code de l’administrateur</b> : dans Firestore, créez la collection <span class="mono">invitations</span> avec un document dont l’<b>identifiant est le code de l’administrateur</b> (10 lettres MAJUSCULES et chiffres au moins, sans espace ni tiret, par exemple <span class="mono">K7M2QX4R9B</span>) et deux champs : <span class="mono">nom</span> (texte, par exemple « Direction ») et <span class="mono">admin</span> (booléen, <span class="mono">true</span>).</li>
+      </ol>
+      <h3>Ensuite, tout se fait dans l’application</h3>
+      <p>L’administrateur ouvre l’espace professeurs, entre son code, puis va dans « Professeurs » pour créer un <b>code d’entrée personnel</b> pour chaque professeur. Chaque professeur entre avec son code, choisit sa matière, ajoute ses élèves et saisit ses notes. Les élèves d’une même classe sont communs à tous les professeurs, mais chacun saisit et supprime uniquement ses propres notes.</p>
+      <p>Pour retirer l’accès d’un professeur, l’administrateur touche « Retirer » : son code cesse de fonctionner immédiatement.</p>
+      <p>Dans « Établissement », l’administrateur renseigne l’année scolaire, le téléphone et l’adresse, et publie des annonces visibles par les parents (page Infos). La sauvegarde des données et le passage à une nouvelle année scolaire s’y trouvent aussi.</p>
+    </div>
+    <div class="card">
+      <h2>Règles Firestore à coller</h2>
+      <pre class="rules" id="rules">${esc(RULES)}</pre>
+      <div class="row"><button class="btn alt" data-a="copyrules">Copier les règles</button></div>
+      <p class="hint">Ces règles sont appliquées par Google, pas par l’application : elles ne peuvent pas être contournées en modifiant la page. Les codes de 10 caractères sont difficiles à deviner, mais gardez-les confidentiels. Les parents ne se connectent pas : ils lisent seulement le bulletin de leur enfant avec son code, sans pouvoir le modifier.</p>
+    </div>`;
+}
+
+/* =====================================================================
+   9. ÉVÉNEMENTS
+   ===================================================================== */
+const app = $('#app');
+
+app.addEventListener('click', async e => {
+  const g = e.target.closest('[data-go]');
+  if (g) { navigate(g.dataset.go); return; }
+  const b = e.target.closest('button[data-a]');
+  if (!b) return;
+  const a = b.dataset.a, v = b.dataset.v, id = b.dataset.id;
+
+  if (a === 'del') {
+    if (!b.dataset.armed) {
+      b.dataset.armed = '1'; b.dataset.label = b.textContent; b.textContent = 'Confirmer ?';
+      setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = b.dataset.label; } }, 3000);
+      return;
+    }
+    if (b.dataset.t === 'note') {
+      const st = data.students.find(s => s.notes.some(n => n.id === id));
+      const note = st && st.notes.find(n => n.id === id);
+      if (st && note && note.by === me.id) {
+        st.notes = st.notes.filter(n => n.id !== id);
+        bg(DB.removeNote(st, note)); markDirty(clsKey(st.cls));
+      }
+      render(); return;
+    }
+    if (b.dataset.t === 'student') {
+      const st = data.students.find(s => s.id === id);
+      if (st) {
+        data.students = data.students.filter(s => s.id !== id);
+        view.ed = null;
+        bg(DB.deleteStudent(st)); markDirty(clsKey(st.cls));
+        toast('Élève supprimé.'); navigate('/prof'); return;
+      }
+    }
+    if (b.dataset.t === 'eval') {
+      const ev = data.evals.find(x => x.id === id);
+      if (ev && (ev.by === me.id || me.admin)) {
+        data.evals = data.evals.filter(x => x.id !== id);
+        bg(DB.deleteEval(id)); markDirty(clsKey(ev.cls)); toast('Évaluation supprimée.');
+      }
+      render(); return;
+    }
+    if (b.dataset.t === 'news') { data.news = data.news.filter(n => n.id !== id); bg(DB.config()); publishPublic(); render(); return; }
+    if (b.dataset.t === 'teacher') {
+      if (ONLINE) {
+        try { await fdb.collection('invitations').doc(id).delete(); view.team.loaded = false; toast('Accès retiré.'); }
+        catch (err) { console.error(err); toast('Suppression impossible.', 'err'); }
+      } else {
+        data.team = data.team.filter(x => x.code !== id); persist(); toast('Accès retiré.');
+      }
+      render(); return;
+    }
+    return;
+  }
+
+  switch (a) {
+    case 'theme': applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'); break;
+    case 'print': window.print(); return;
+    case 'term': view.term = +v; break;
+    case 'tcls': view.tClass = v; break;
+    case 'refresh': pb = {}; toast('Actualisation…'); break;
+    case 'clearnames': view.add.names = ''; view.add.photo = ''; break;
+    case 'planeval': doAddEval(); return;
+    case 'evnotes': openEvalNotes(id); return;
+    case 'savees': doSaveEs(); return;
+    case 'addnews': doAddNews(); return;
+    case 'saveremark': doSaveRemark(); return;
+    case 'rmphrase': view.rm.text = RM_PHRASES[+v]; break;
+    case 'csv': exportClassCsv(); return;
+    case 'backup': exportBackup(); return;
+    case 'confirmrestore': doRestore(); return;
+    case 'cancelrestore': view.restore = null; break;
+    case 'newyear': doNewYear(); return;
+
+    /* --- entrée des professeurs --- */
+    case 'enter': if (ONLINE) await doEnterOnline(); else doEnterLocal(); return;
+    case 'setupadmin': doSetupAdmin(); return;
+    case 'recheck': await checkAccess(); return;
+    case 'logout':
+      if (ONLINE) { try { await fauth.signOut(); } catch (err) {} }
+      else me = null;
+      navigate('/prof'); return;
+    case 'saveprofile': doProfile(); return;
+    case 'addteacher': await doAddTeacher(); return;
+    case 'copyteacher':
+      try { await navigator.clipboard.writeText(showTeacherCode(b.dataset.code)); toast('Code copié.', 'ok'); }
+      catch (err) { toast('Copie impossible : recopiez le code à la main.', 'err'); }
+      return;
+
+    /* --- données --- */
+    case 'addstudents': doAddStudents(); return;
+    case 'saveqe': doSaveQuick(); return;
+    case 'addnote': doAddNote(); return;
+    case 'saveident': doSaveIdent(); return;
+    case 'republish': classes().forEach(c => dirty.add(c.key)); await publish(); toast('Bulletins republiés.', 'ok'); return;
+    case 'copycode':
+      try { await navigator.clipboard.writeText(showCode(b.dataset.code)); toast('Code copié.', 'ok'); }
+      catch (err) { toast('Copie impossible : recopiez le code à la main.', 'err'); }
+      return;
+    case 'copyrules':
+      try { await navigator.clipboard.writeText(RULES); toast('Règles copiées.', 'ok'); }
+      catch (err) { toast('Copie impossible : sélectionnez le texte à la main.', 'err'); }
+      return;
+
+    /* --- parents --- */
+    case 'addchild': {
+      const code = normCode(view.pcode), el = $('#pcerr');
+      if (code.length < 8) { el.textContent = 'Le code contient 8 caractères. Vérifiez-le auprès du professeur.'; return; }
+      if (childCodes().includes(code)) { el.textContent = 'Cet enfant est déjà dans votre liste.'; return; }
+      el.textContent = 'Recherche…';
+      const bl = await Bulletins.get(code);
+      if (bl === false) { el.textContent = 'Connexion impossible. Vérifiez votre connexion internet.'; return; }
+      if (!bl) { el.textContent = 'Code introuvable. Vérifiez-le auprès du professeur.'; return; }
+      Local.set('school-children', [...childCodes(), code]);
+      const sn = Local.get('school-seen', {}); sn[code] = Date.now(); Local.set('school-seen', sn);
+      pb[code] = bl; view.pcode = '';
+      toast(`${bl.name} ajouté(e).`, 'ok');
+      navigate('/parents/eleve/' + code); return;
+    }
+    case 'rmchild':
+      Local.set('school-children', childCodes().filter(c => c !== b.dataset.code));
+      break;
+  }
+  render();
+});
+
+app.addEventListener('input', e => {
+  const el = e.target, f = el.dataset.f;
+  switch (f) {
+    case 'pcode': view.pcode = el.value; break;
+    case 'ecode': view.ecode = el.value; break;
+    case 'sname': view.setup.nom = el.value; break;
+    case 'scode': view.setup.code = el.value; break;
+    case 'scode2': view.setup.code2 = el.value; break;
+    case 'tname': view.team.name = el.value; break;
+    case 'evtitle': view.ev.title = el.value; break;
+    case 'esch': view.es.school = el.value; break;
+    case 'esyear': view.es.year = el.value; break;
+    case 'esphone': view.es.phone = el.value; break;
+    case 'esaddr': view.es.address = el.value; break;
+    case 'nwtitle': view.nw.title = el.value; break;
+    case 'nwtext': view.nw.text = el.value; break;
+    case 'nwdate': view.nw.date = el.value; break;
+    case 'rmtext': view.rm.text = el.value; break;
+    case 'nyyear': view.ny.year = el.value; break;
+    case 'nyconf': view.ny.confirm = el.value; break;
+    case 'pschool': view.prof.school = el.value; break;
+    case 'pnew': view.prof.newSub = el.value; break;
+    case 'pcoef': view.prof.coef = el.value; break;
+    case 'acls': view.add.cls = el.value; break;
+    case 'anames': view.add.names = el.value; break;
+    case 'qdate': view.qe.date = el.value; break;
+    case 'nfv': view.nf.v = el.value; break;
+    case 'nfdate': view.nf.date = el.value; break;
+    case 'ename': view.ed.name = el.value; break;
+    case 'ecls': view.ed.cls = el.value; break;
+    case 'qv': {
+      const p = parseMark(el.value);
+      el.classList.toggle('bad', !!p.bad);
+      view.qe.vals[el.dataset.sid] = el.value;
+      break;
+    }
+  }
+});
+
+app.addEventListener('change', e => {
+  const f = e.target.dataset.f;
+  if (f === 'impfile') { const file = e.target.files && e.target.files[0]; if (file) importFile(file); return; }
+  if (f === 'psub') { view.prof.sub = e.target.value; render(); }
+  if (f === 'statsub') { view.statSub = e.target.value; render(); }
+  if (f === 'evcls') { view.ev.cls = e.target.value; render(); }
+  if (f === 'evtype') view.ev.type = e.target.value;
+  if (f === 'evt') view.ev.t = +e.target.value;
+  if (f === 'evdate') { view.ev.date = e.target.value; render(); }
+  if (f === 'notedate') { doChangeNoteDate(e.target.dataset.id, e.target.value); return; }
+  if (f === 'restorefile') { const file = e.target.files && e.target.files[0]; if (file) readRestore(file); return; }
+  if (f === 'qcls') { view.qe.cls = e.target.value; view.qe.vals = {}; render(); }
+  if (f === 'qtype') view.qe.type = e.target.value;
+  if (f === 'nftype') view.nf.type = e.target.value;
+  if (f === 'school') {
+    data.school = e.target.value.trim();
+    bg(DB.config()); classes().forEach(c => markDirty(c.key)); render();
+  }
+});
+
+app.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const el = e.target;
+  const click = sel => { const b = document.querySelector(sel); if (b) b.click(); };
+  if (el.id === 'ecode') return click('[data-a="enter"]');
+  if (el.id === 'scode' || el.id === 'scode2') return click('[data-a="setupadmin"]');
+  if (el.id === 'tname') return click('[data-a="addteacher"]');
+  if (el.id === 'pcode') return click('[data-a="addchild"]');
+  if (el.id === 'nfv') return click('[data-a="addnote"]');
+  if (el.classList && el.classList.contains('g')) {
+    e.preventDefault();
+    const all = [...document.querySelectorAll('input.g')];
+    const next = all[all.indexOf(el) + 1];
+    if (next) { next.focus(); next.select(); }
+  }
+});
+
+/* =====================================================================
+   10. DÉMARRAGE
+   ===================================================================== */
+const loadScript = src => new Promise((res, rej) => {
+  const s = document.createElement('script');
+  s.src = src; s.onload = res; s.onerror = () => rej(new Error('Chargement impossible : ' + src));
+  document.head.appendChild(s);
+});
+
+(async function init() {
+  applyTheme(Local.get('school-theme', null) || (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+  try { route = location.hash.slice(1) || '/'; } catch (e) { route = '/'; }
+
+  if (!ONLINE) {
+    const saved = Local.get('school-v3', null);
+    if (saved) data = saved;
+    ['subjects', 'students', 'team', 'news', 'evals'].forEach(k => { if (!Array.isArray(data[k])) data[k] = []; });
+    ['school', 'year', 'phone', 'address'].forEach(k => { if (typeof data[k] !== 'string') data[k] = ''; });
+    data.students.forEach(s => { if (!s.remarks) s.remarks = {}; if (!s.teachers) s.teachers = {}; });
+    render();
+    return;
+  }
+
+  render();
+  try {
+    await loadScript(SDK + 'firebase-app-compat.js');
+    await loadScript(SDK + 'firebase-auth-compat.js');
+    await loadScript(SDK + 'firebase-firestore-compat.js');
+    firebase.initializeApp(FIREBASE_CONFIG);
+    fauth = firebase.auth(); fdb = firebase.firestore();
+    resolveSdk();
+  } catch (e) {
+    console.error(e);
+    resolveSdk();
+    authMsg = 'Impossible de charger Firebase. Vérifiez votre connexion internet.';
+    authState = 'error'; render(); return;
+  }
+  fauth.onAuthStateChanged(async user => {
+    authUser = user;
+    if (!user) { stopSync(); me = null; authState = 'out'; render(); return; }
+    await checkAccess();
+  });
+})();
+
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "carnet-de-notes-installation",
+  "private": true,
+  "description": "Outil d'installation du carnet de notes",
+  "scripts": {
+    "admin": "node setup-admin.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

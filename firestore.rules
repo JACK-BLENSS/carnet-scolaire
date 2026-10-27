@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function signed() { return request.auth != null; }
+    function meDoc() {
+      return /databases/$(db)/documents/autorises/$(request.auth.uid);
+    }
+    function inv(code) {
+      return /databases/$(db)/documents/invitations/$(code);
+    }
+    // Un professeur est autorisé tant que son code existe dans « invitations »
+    function allowed() {
+      return signed() && exists(meDoc()) && exists(inv(get(meDoc()).data.code));
+    }
+    function isAdmin() {
+      return allowed() && get(inv(get(meDoc()).data.code)).data.admin == true;
+    }
+
+    match /invitations/{code} {
+      allow get: if true;
+      allow list, create, update, delete: if isAdmin();
+    }
+    match /autorises/{uid} {
+      allow get: if signed() && request.auth.uid == uid;
+      allow list: if isAdmin();
+      allow create: if signed() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['code','nom'])
+        && exists(inv(request.resource.data.code));
+      allow update: if allowed() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['matiere']);
+    }
+    // Informations publiques (annonces, contact) : lisibles par les parents
+    match /public/{doc} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if isAdmin();
+    }
+    // Calendrier des évaluations : chaque professeur gère les siennes
+    match /evaluations/{id} {
+      allow read: if allowed();
+      allow create: if allowed() && request.resource.data.by == request.auth.uid;
+      allow update, delete: if allowed() && (resource.data.by == request.auth.uid || isAdmin());
+    }
+    match /config/{doc}  { allow read, write: if allowed(); }
+    match /eleves/{id}   { allow read, write: if allowed(); }
+    match /bulletins/{code} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if allowed();
+    }
+  }
+}
