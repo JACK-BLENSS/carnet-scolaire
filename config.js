@@ -1,6 +1,6 @@
 // Collez ici les 4 valeurs de votre application Web Firebase
 // (console Firebase > Paramètres du projet > Vos applications).
-const firebaseConfig = {
+windows.firebaseConfig = {
   apiKey: "AIzaSyBWRh5alnx4663LyCcS_UHvYX6dr-3Ui00",
   authDomain: "carnet-de-note-cd33b.firebaseapp.com",
   projectId: "carnet-de-note-cd33b",
