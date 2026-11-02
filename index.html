@@ -13,7 +13,7 @@
   --accent:#D97800; --accent-tint:#FFF0DA;
   --danger:#C62F2F; --danger-tint:#FCE8E8;
   --hero-a:#0A5A3C; --hero-b:#14965F;
-  --shadow:0 1px 2px  rgba(16,40,28,.06),0 8px 22px rgba(16,40,28,.07);
+  --shadow:0 1px 2px rgba(16,40,28,.06),0 8px 22px rgba(16,40,28,.07);
   --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
   color-scheme:light;
 }
@@ -340,13 +340,10 @@ main.enter>*:nth-child(n+6){animation-delay:.25s}
 'use strict';
 
 const FIREBASE_CONFIG = Object.assign({
-  apiKey: "AIzaSyBWRh5alnx4663LyCcS_UHvYX6dr-3Ui00",
-  authDomain: "carnet-de-note-cd33b.firebaseapp.com",
-  projectId: "carnet-de-note-cd33b",
-  storageBucket: "carnet-de-note-cd33b.firebasestorage.app",
-  messagingSenderId: "992179303719",
-  appId: "1:992179303719:web:4f82c40bd528c54a30e502",
-  measurementId: "G-EEN2366PR7"
+  apiKey: '',
+  authDomain: '',
+  projectId: '',
+  appId: ''
 }, window.FIREBASE_CONFIG || {});   // ou bien : fichier config.js placé à côté de index.html
 
 const ONLINE = !!(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId);
@@ -478,13 +475,11 @@ let resolveSdk;
 const sdkReady = new Promise(r => { resolveSdk = r; });
 
 const newProf = () => ({sub: '', newSub: '', coef: 2, school: ''});
-let settingUp = false;          // création du premier administrateur en cours (en ligne)
 let pending = null;            // code saisi pendant la connexion en ligne
 const view = {
   term: 1, tClass: null, pcode: '', status: '', loaded: !ONLINE,
   ecode: '', entryErr: '', setup: {nom: '', code: '', code2: ''}, prof: newProf(),
-  team: {items: [], reqs: [], regErr: '', loaded: false, loading: false, name: '', err: ''},
-  reg: {nom: '', code: '', code2: '', done: false},
+  team: {items: [], loaded: false, loading: false, name: '', err: ''},
   nf: {type: 'D', v: '', date: todayStr()}, ed: null,
   add: {cls: '', names: '', photo: ''},
   qe: {cls: null, type: 'D', date: todayStr(), vals: {}},
@@ -876,7 +871,6 @@ async function checkAccess() {
     startSync();
     me = {id: authUser.uid, nom: iv.nom || p.nom || 'Professeur', sub: p.matiere || '', admin: iv.admin === true, code: p.code};
     authState = me.sub ? 'ready' : 'profile';
-    if (me.admin) sealSetup();
   } catch (e) {
     console.error(e);
     authMsg = 'Impossible de vérifier votre accès. Vérifiez la connexion internet et les règles Firestore.';
@@ -895,59 +889,7 @@ function doEnterLocal() {
   me = meFromTeam(t); view.ecode = '';
   navigate('/prof');
 }
-async function checkSetup() {
-  if (view.setupChecking) return;
-  view.setupChecking = true;
-  try { await sdkReady; const d = await fdb.collection('meta').doc('admin').get(); view.needSetup = !d.exists; }
-  catch (e) { console.error(e); view.needSetup = false; }
-  view.setupChecking = false;
-  render();
-}
-/* Ferme la création libre d'administrateur (anciens sites : le premier administrateur qui se connecte la ferme) */
-async function sealSetup() {
-  try {
-    const r = fdb.collection('meta').doc('admin');
-    const d = await r.get();
-    if (!d.exists) await r.set({at: Date.now()});
-    view.needSetup = false;
-  } catch (e) { console.error(e); }
-}
-async function doSetupAdminOnline() {
-  const s = view.setup, nom = s.nom.trim(), code = normCode(s.code);
-  if (!nom) return authError('Saisissez votre nom.');
-  if (code.length < 8) return authError('Le code doit contenir au moins 8 lettres ou chiffres.');
-  if (code !== normCode(s.code2)) return authError('Les deux codes ne sont pas identiques.');
-  authError('Création du compte…');
-  settingUp = true;
-  try {
-    await sdkReady;
-    try { await fauth.createUserWithEmailAndPassword(teacherEmail(code), code); }
-    catch (e) {
-      if (e.code === 'auth/email-already-in-use') await fauth.signInWithEmailAndPassword(teacherEmail(code), code);
-      else throw e;
-    }
-    const b = fdb.batch();
-    b.set(fdb.collection('invitations').doc(code), {nom, admin: true});
-    b.set(fdb.collection('meta').doc('admin'), {at: Date.now()});
-    await b.commit();
-  } catch (e) {
-    console.error(e);
-    settingUp = false;
-    try { if (fauth.currentUser) await fauth.currentUser.delete(); } catch (x) { try { await fauth.signOut(); } catch (y) {} }
-    return authError(e && e.code === 'permission-denied'
-      ? 'Création refusée : un administrateur existe déjà, ou les règles Firestore ne sont pas à jour (voir le Guide d’installation).'
-      : e && e.code === 'auth/network-request-failed' ? 'Connexion internet indisponible.'
-      : 'Création impossible. Vérifiez la connexion internet et la configuration.');
-  }
-  pending = {code, nom};
-  view.setup = {nom: '', code: '', code2: ''};
-  view.needSetup = false;
-  settingUp = false;
-  toast('Compte administrateur créé.', 'ok');
-  await checkAccess();
-}
 function doSetupAdmin() {
-  if (ONLINE) return doSetupAdminOnline();
   const s = view.setup, nom = s.nom.trim(), code = normCode(s.code);
   if (!nom) return authError('Saisissez votre nom.');
   if (code.length < 6) return authError('Le code doit contenir au moins 6 lettres ou chiffres.');
@@ -967,7 +909,7 @@ function doSetupAdmin() {
    À la prochaine visite de « Parents » ou « Professeurs », on redemande les informations. */
 function endSession() {
   Local.set('school-children', []);
-  pb = {}; view.pcode = ''; view.ecode = ''; view.entryErr = ''; view.reg = {nom: '', code: '', code2: '', done: false};
+  pb = {}; view.pcode = ''; view.ecode = ''; view.entryErr = '';
   if (ONLINE) { try { if (fauth && fauth.currentUser) fauth.signOut().catch(() => {}); } catch (e) {} }
   else me = null;
 }
@@ -1297,13 +1239,10 @@ function bulletinPage() {
    ===================================================================== */
 const wait = txt => `<div class="card">${txt}</div>`;
 function profPage() {
-  if (route === '/prof/inscription' && (ONLINE ? authState === 'out' : !me)) return registerPage();
   if (ONLINE) {
     switch (authState) {
       case 'loading': return wait('Chargement…');
-      case 'out':
-        if (view.needSetup === undefined) { checkSetup(); return wait('Chargement…'); }
-        return view.needSetup ? setupAdminPage() : entryPage();
+      case 'out': return entryPage();
       case 'checking': return wait('Vérification de votre accès…');
       case 'revoked': return infoPage('Accès retiré', 'Votre code d’entrée n’est plus valide. Contactez l’administrateur de l’établissement.', false);
       case 'error': return infoPage('Problème de connexion', authMsg, true);
@@ -1336,23 +1275,21 @@ function entryPage() {
     <input type="password" id="ecode" class="full" data-f="ecode" autocomplete="off" autocapitalize="characters" value="${esc(view.ecode)}">
     <p id="autherr" class="err" aria-live="polite">${esc(err)}</p>
     <button class="btn block" data-a="enter">Entrer</button>
-    <div class="row"><button class="btn alt block" data-go="/prof/inscription">Pas encore de code ? Je m’inscris</button></div>
   </div>`;
 }
 function setupAdminPage() {
-  const s = view.setup, min = ONLINE ? 8 : 6;
+  const s = view.setup;
   return `<div class="card">
-    <h2>${ONLINE ? 'Premier accès : créer l’administrateur' : 'Premier accès (mode essai)'}</h2>
+    <h2>Premier accès (mode essai)</h2>
     <p class="lead">Créez le compte de l’administrateur. Il pourra ensuite créer un code d’entrée personnel pour chaque professeur.</p>
     <label for="sname">Votre nom</label>
     <input type="text" id="sname" class="full" data-f="sname" value="${esc(s.nom)}" autocomplete="off" placeholder="Ex. : Mme Diallo">
-    <label for="scode">Votre code d’entrée (${min} lettres ou chiffres au moins)</label>
+    <label for="scode">Votre code d’entrée (6 lettres ou chiffres au moins)</label>
     <input type="password" id="scode" class="full" data-f="scode" autocomplete="off" value="${esc(s.code)}">
     <label for="scode2">Confirmer le code</label>
     <input type="password" id="scode2" class="full" data-f="scode2" autocomplete="off" value="${esc(s.code2)}">
     <p id="autherr" class="err" aria-live="polite"></p>
     <button class="btn block" data-a="setupadmin">Créer le compte</button>
-    ${ONLINE ? '<p class="hint">Ce code sera votre clé d’administrateur : gardez-le confidentiel. Cette page ne s’affiche que pour le tout premier accès.</p><div class="row"><button class="btn alt small" data-a="hascode">J’ai déjà un code d’entrée</button></div>' : ''}
   </div>`;
 }
 function infoPage(title, text, retry) {
@@ -2269,92 +2206,6 @@ function accountPage() {
     <button class="btn danger block" data-a="logout">Se déconnecter</button>`;
 }
 
-/* ---------- Inscription d'un professeur (nom + code), à valider par l'administrateur ---------- */
-function registerPage() {
-  const r = view.reg, min = ONLINE ? 8 : 6;
-  if (r.done) return `<div class="card">
-    <h2>Inscription enregistrée</h2>
-    <p class="lead">Merci ! Dès que l’administrateur aura validé votre inscription, revenez sur la page « Professeurs » et entrez votre code.</p>
-    <div class="row"><button class="btn block" data-a="regdone">Aller à la connexion</button></div>
-  </div>`;
-  return `${backBtn('/prof')}<div class="card">
-    <h2>Inscription des professeurs</h2>
-    <p class="lead">Indiquez votre nom et choisissez votre code personnel. L’administrateur validera votre inscription.</p>
-    <label for="rname">Votre nom</label>
-    <input type="text" id="rname" class="full" data-f="rname" value="${esc(r.nom)}" autocomplete="off" placeholder="Ex. : M. Koné">
-    <label for="rcode">Votre code (${min} lettres ou chiffres au moins)</label>
-    <input type="password" id="rcode" class="full" data-f="rcode" autocomplete="off" value="${esc(r.code)}">
-    <label for="rcode2">Confirmer le code</label>
-    <input type="password" id="rcode2" class="full" data-f="rcode2" autocomplete="off" value="${esc(r.code2)}">
-    <p id="regerr" class="err" aria-live="polite"></p>
-    <button class="btn block" data-a="register">M’inscrire</button>
-    <p class="hint">Retenez bien ce code : vous en aurez besoin à chaque connexion. Vous n’aurez accès aux notes qu’après validation.</p>
-  </div>`;
-}
-async function doRegister() {
-  const r = view.reg, nom = r.nom.trim(), code = normCode(r.code), min = ONLINE ? 8 : 6;
-  const err = m => { const el = $('#regerr'); if (el) el.textContent = m; };
-  if (!nom) return err('Saisissez votre nom.');
-  if (code.length < min) return err(`Le code doit contenir au moins ${min} lettres ou chiffres.`);
-  if (code !== normCode(r.code2)) return err('Les deux codes ne sont pas identiques.');
-  err('Envoi…');
-  if (ONLINE) {
-    try {
-      await sdkReady;
-      const inv = await fdb.collection('invitations').doc(code).get();
-      if (inv.exists) return err('Ce code est déjà utilisé. Choisissez-en un autre.');
-      await fdb.collection('inscriptions').add({nom, code, at: Date.now()});
-    } catch (e) {
-      console.error(e);
-      return err(e && e.code === 'permission-denied'
-        ? 'Inscription refusée : les règles Firestore ne sont pas à jour (voir le Guide d’installation).'
-        : 'Inscription impossible. Vérifiez la connexion internet.');
-    }
-  } else {
-    if (data.team.some(x => x.code === code)) return err('Ce code est déjà utilisé. Choisissez-en un autre.');
-    const list = Local.get('school-regs', []);
-    list.push({id: uid(), nom, code, at: Date.now()});
-    Local.set('school-regs', list);
-  }
-  view.reg = {nom: '', code: '', code2: '', done: true};
-  render();
-}
-const regItems = () => ONLINE ? view.team.reqs : Local.get('school-regs', []);
-async function doAcceptReg(id) {
-  const r = regItems().find(x => x.id === id);
-  if (!r) return;
-  if (ONLINE) {
-    try {
-      const ex = await fdb.collection('invitations').doc(r.code).get();
-      if (ex.exists) {
-        await fdb.collection('inscriptions').doc(id).delete();
-        toast('Ce code existe déjà : demande retirée.', 'err');
-      } else {
-        const b = fdb.batch();
-        b.set(fdb.collection('invitations').doc(r.code), {nom: r.nom, admin: false});
-        b.delete(fdb.collection('inscriptions').doc(id));
-        await b.commit();
-        toast(`${r.nom} est accepté(e).`, 'ok');
-      }
-    } catch (e) { console.error(e); return toast('Validation impossible.', 'err'); }
-    view.team.loaded = false;
-  } else {
-    if (data.team.some(x => x.code === r.code)) toast('Ce code existe déjà : demande retirée.', 'err');
-    else { data.team.push({id: uid(), nom: r.nom, code: r.code, admin: false, sub: '', used: false}); persist(); toast(`${r.nom} est accepté(e).`, 'ok'); }
-    Local.set('school-regs', regItems().filter(x => x.id !== id));
-  }
-  render();
-}
-async function doRejectReg(id) {
-  if (ONLINE) {
-    try { await fdb.collection('inscriptions').doc(id).delete(); view.team.loaded = false; toast('Demande refusée.'); }
-    catch (e) { console.error(e); return toast('Suppression impossible.', 'err'); }
-  } else {
-    Local.set('school-regs', regItems().filter(x => x.id !== id)); toast('Demande refusée.');
-  }
-  render();
-}
-
 /* ---------- Gestion des professeurs (administrateur) ---------- */
 async function loadTeam() {
   const t = view.team;
@@ -2365,11 +2216,6 @@ async function loadTeam() {
       .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
     t.err = '';
   } catch (e) { console.error(e); t.err = 'Impossible de charger la liste des professeurs.'; }
-  try {
-    const rq = await fdb.collection('inscriptions').get();
-    t.reqs = rq.docs.map(d => ({id: d.id, nom: d.data().nom || '', code: d.data().code || '', at: d.data().at || 0})).sort((a, b) => a.at - b.at);
-    t.regErr = '';
-  } catch (e) { console.error(e); t.reqs = []; t.regErr = 'Inscriptions illisibles : mettez à jour les règles Firestore (Guide d’installation).'; }
   t.loaded = true; t.loading = false;
   render();
 }
@@ -2390,22 +2236,8 @@ function teamPage() {
     <button class="btn alt small" data-a="copyteacher" data-code="${esc(x.code)}">Copier</button>
     ${x.code === me.code ? '' : `<button class="btn danger small" data-a="del" data-t="teacher" data-id="${esc(x.code)}">Retirer</button>`}
   </div>`).join('');
-  const reqs = regItems();
-  const reqRows = reqs.map(x => `<div class="note-row">
-    ${avatar(x.nom || '?', 'sm')}
-    <span class="date" style="min-width:130px"><b style="color:var(--text)">${esc(x.nom || '(sans nom)')}</b><br><span class="hint">${esc(new Date(x.at).toLocaleDateString('fr-FR'))}</span></span>
-    <button class="btn small" data-a="accreg" data-id="${esc(x.id)}">Accepter</button>
-    <button class="btn danger small" data-a="rejreg" data-id="${esc(x.id)}">Refuser</button>
-  </div>`).join('');
-  const regCard = (reqs.length || t.regErr) ? `<div class="card">
-      <h2>Inscriptions à valider <span class="pill small warn">${reqs.length}</span></h2>
-      ${t.regErr ? `<p class="err">${esc(t.regErr)}</p>` : ''}
-      ${reqRows}
-      <p class="hint">Un professeur n’a accès aux notes qu’une fois accepté.</p>
-    </div>` : '';
   return `
     ${backBtn('/prof')}
-    ${regCard}
     <div class="card">
       <h2>Ajouter un professeur</h2>
       <p class="lead">Chaque professeur reçoit un code d’entrée personnel. Donnez-le lui directement.</p>
@@ -2460,33 +2292,9 @@ service cloud.firestore {
       return allowed() && get(inv(get(meDoc()).data.code)).data.admin == true;
     }
 
-    // Verrou du premier accès : tant qu'il n'existe pas, le premier arrivé peut créer l'administrateur
-    function adminFlag() {
-      return /databases/$(db)/documents/meta/admin;
-    }
-    match /meta/{doc} {
-      allow get: if true;
-      allow list: if false;
-      allow create: if doc == 'admin' && !exists(adminFlag())
-        && request.resource.data.keys().hasOnly(['at'])
-        && (isAdmin() || signed());
-      allow update, delete: if false;
-    }
     match /invitations/{code} {
       allow get: if true;
-      allow list, update, delete: if isAdmin();
-      allow create: if isAdmin()
-        || (signed() && !exists(adminFlag()) && request.resource.data.admin == true
-            && request.resource.data.keys().hasOnly(['nom','admin']));
-    }
-    // Inscriptions des professeurs : tout le monde peut déposer une demande, seul l'administrateur la lit et la valide
-    match /inscriptions/{id} {
-      allow create: if request.resource.data.keys().hasOnly(['nom','code','at'])
-        && request.resource.data.nom is string && request.resource.data.nom.size() > 0 && request.resource.data.nom.size() <= 80
-        && request.resource.data.code is string && request.resource.data.code.size() >= 8 && request.resource.data.code.size() <= 40
-        && request.resource.data.at is number;
-      allow read, delete: if isAdmin();
-      allow update: if false;
+      allow list, create, update, delete: if isAdmin();
     }
     match /autorises/{uid} {
       allow get: if signed() && request.auth.uid == uid;
@@ -2533,7 +2341,7 @@ function helpPage() {
         <li><b>Paramètres du projet</b>, puis « Vos applications » : ajoutez une application Web et copiez les 4 valeurs (apiKey, authDomain, projectId, appId).</li>
         <li>Ouvrez le fichier <span class="mono">carnet-de-notes.html</span> dans un éditeur de texte et collez ces valeurs dans <span class="mono">FIREBASE_CONFIG</span>, tout en haut du script (ou dans <span class="mono">config.js</span> si vous utilisez le dossier d’installation fourni).</li>
         <li>Mettez le fichier en ligne avec <b>Firebase Hosting</b> (renommez-le <span class="mono">index.html</span>).</li>
-        <li><b>Premier accès</b> : ouvrez le site, touchez « Professeurs ». Au tout premier accès, l’application vous demande de créer l’administrateur (votre nom et un code d’au moins 8 lettres ou chiffres). Faites-le tout de suite après la mise en ligne, avant de donner l’adresse à d’autres personnes. Plus besoin de créer quoi que ce soit à la main dans Firestore.</li>
+        <li><b>Créez le code de l’administrateur</b> : dans Firestore, créez la collection <span class="mono">invitations</span> avec un document dont l’<b>identifiant est le code de l’administrateur</b> (10 lettres MAJUSCULES et chiffres au moins, sans espace ni tiret, par exemple <span class="mono">K7M2QX4R9B</span>) et deux champs : <span class="mono">nom</span> (texte, par exemple « Direction ») et <span class="mono">admin</span> (booléen, <span class="mono">true</span>).</li>
       </ol>
       <h3>Ensuite, tout se fait dans l’application</h3>
       <p>L’administrateur ouvre l’espace professeurs, entre son code, puis va dans « Professeurs » pour créer un <b>code d’entrée personnel</b> pour chaque professeur. Chaque professeur entre avec son code, choisit sa matière, ajoute ses élèves et saisit ses notes. Les élèves d’une même classe sont communs à tous les professeurs, mais chacun saisit et supprime uniquement ses propres notes.</p>
@@ -2626,11 +2434,6 @@ app.addEventListener('click', async e => {
 
     /* --- entrée des professeurs --- */
     case 'enter': if (ONLINE) await doEnterOnline(); else doEnterLocal(); return;
-    case 'register': await doRegister(); return;
-    case 'regdone': view.reg.done = false; navigate('/prof'); return;
-    case 'accreg': await doAcceptReg(id); return;
-    case 'rejreg': await doRejectReg(id); return;
-    case 'hascode': view.needSetup = false; break;
     case 'setupadmin': doSetupAdmin(); return;
     case 'recheck': await checkAccess(); return;
     case 'logout':
@@ -2690,9 +2493,6 @@ app.addEventListener('input', e => {
     case 'scode': view.setup.code = el.value; break;
     case 'scode2': view.setup.code2 = el.value; break;
     case 'tname': view.team.name = el.value; break;
-    case 'rname': view.reg.nom = el.value; break;
-    case 'rcode': view.reg.code = el.value; break;
-    case 'rcode2': view.reg.code2 = el.value; break;
     case 'evtitle': view.ev.title = el.value; break;
     case 'esch': view.es.school = el.value; break;
     case 'esyear': view.es.year = el.value; break;
@@ -2750,7 +2550,6 @@ app.addEventListener('keydown', e => {
   if (el.id === 'ecode') return click('[data-a="enter"]');
   if (el.id === 'scode' || el.id === 'scode2') return click('[data-a="setupadmin"]');
   if (el.id === 'tname') return click('[data-a="addteacher"]');
-  if (el.id === 'rcode2') return click('[data-a="register"]');
   if (el.id === 'pcode') return click('[data-a="addchild"]');
   if (el.id === 'nfv') return click('[data-a="addnote"]');
   if (el.classList && el.classList.contains('g')) {
@@ -2800,7 +2599,6 @@ const loadScript = src => new Promise((res, rej) => {
   }
   fauth.onAuthStateChanged(async user => {
     authUser = user;
-    if (settingUp) return;
     if (!user) { stopSync(); me = null; authState = 'out'; render(); return; }
     await checkAccess();
   });
