@@ -251,74 +251,6 @@ a{color:var(--primary); font-weight:700}
 .nt small{font-size:.72rem; opacity:.8; margin-left:4px; font-weight:600}
 .datein{padding:7px 10px; font-size:.9rem}
 
-/* ===== Arrière-plan et look amélioré ===== */
-:root{
-  --veil:rgba(243,246,244,.86);
-  --pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='190' viewBox='0 0 190 190' fill='none' stroke='%230F7B52' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' opacity='.17'%3E%3Cpath d='M18 34h24a8 8 0 0 1 8 8v32a6 6 0 0 0-6-6H18z'/%3E%3Cpath d='M82 34H58a8 8 0 0 0-8 8v32a6 6 0 0 1 6-6h26z'/%3E%3Cpath d='M128 28l22 22-36 14 14-36z'/%3E%3Cpath d='M44 138v18M35 147h18'/%3E%3Cpath d='M96 128l9 9 18-20'/%3E%3Ccircle cx='156' cy='146' r='11'/%3E%3Cpath d='M150 96l5 10 11 1-8 8 2 11-10-6-10 6 2-11-8-8 11-1z'/%3E%3C/svg%3E");
-  --pat-hero:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' opacity='.14'%3E%3Cpath d='M14 26h20a7 7 0 0 1 7 7v26a5 5 0 0 0-5-5H14z'/%3E%3Cpath d='M68 26H48a7 7 0 0 0-7 7v26a5 5 0 0 1 5-5h22z'/%3E%3Cpath d='M104 22l18 18-30 12 12-30z'/%3E%3Ccircle cx='30' cy='110' r='9'/%3E%3Cpath d='M92 104l8 8 14-16'/%3E%3Cpath d='M126 112v14M119 119h14'/%3E%3C/svg%3E");
-}
-:root[data-theme="dark"]{--veil:rgba(11,22,18,.88)}
-
-/* Image de fond : placez « fond.jpg » à côté de index.html (sinon le motif s'affiche seul) */
-body{background:var(--bg)}
-body::before{
-  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
-  background:
-    linear-gradient(var(--veil),var(--veil)),
-    url("fond.jpg") center/cover no-repeat,
-    var(--pat) 0 0/190px 190px repeat,
-    radial-gradient(circle at 10% 0%,var(--tint),transparent 55%),
-    var(--bg);
-}
-
-/* En-tête */
-.hero{position:relative; overflow:hidden; padding:30px 20px 72px;
-  background:var(--pat-hero) 0 0/150px 150px repeat,radial-gradient(circle at 85% 0%,rgba(255,255,255,.22),transparent 45%),linear-gradient(135deg,var(--hero-a),var(--hero-b));
-  box-shadow:0 10px 30px rgba(10,90,60,.28)}
-.hero::after{content:""; position:absolute; width:220px; height:220px; right:-70px; bottom:-110px; border-radius:50%; background:rgba(255,255,255,.1)}
-.hero h1{font-size:1.95rem; text-shadow:0 2px 10px rgba(0,0,0,.2)}
-.hero p{font-size:1rem}
-
-/* Cartes */
-.card,.door,.student,.summary,.stat{backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px)}
-.card{border-radius:22px; border-top:4px solid var(--primary); transition:transform .18s, box-shadow .18s}
-.card:hover{transform:translateY(-2px); box-shadow:0 2px 4px rgba(16,40,28,.08),0 16px 34px rgba(16,40,28,.13)}
-.door{border-left:5px solid var(--primary)}
-.door:has(.ico.o){border-left-color:var(--accent)}
-.door:hover{transform:translateY(-3px); box-shadow:0 2px 4px rgba(16,40,28,.08),0 16px 34px rgba(16,40,28,.14)}
-.door .ico{background:linear-gradient(135deg,var(--tint),#fff0); box-shadow:inset 0 0 0 1.5px var(--line)}
-.door .chev{transition:transform .15s}
-.door:hover .chev{transform:translateX(4px); color:var(--primary)}
-.student:hover{box-shadow:0 2px 4px rgba(16,40,28,.08),0 12px 26px rgba(16,40,28,.12)}
-.stat b{background:linear-gradient(135deg,var(--primary),var(--accent)); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent}
-
-/* Boutons */
-.btn{background:linear-gradient(135deg,var(--primary),var(--hero-b)); box-shadow:0 4px 12px rgba(15,123,82,.3)}
-.btn.alt,.btn.danger{box-shadow:none}
-.btn.alt{background:var(--tint)}
-.btn.danger{background:var(--danger-tint)}
-.btn:hover{opacity:1; filter:brightness(1.06); transform:translateY(-1px)}
-.pillbtn{backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px)}
-
-/* Navigation du bas en verre dépoli */
-.bottom{background:color-mix(in srgb,var(--card) 82%,transparent); backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4); border-radius:22px 22px 0 0; border-top:1px solid var(--line)}
-.bottom button.on{background:linear-gradient(135deg,var(--tint),transparent)}
-
-/* Titres et détails */
-.pt{display:flex; align-items:center; gap:10px}
-.pt::before{content:""; width:5px; height:1.1em; border-radius:4px; background:linear-gradient(var(--primary),var(--accent))}
-::selection{background:var(--primary); color:var(--on-primary)}
-
-/* Apparition en cascade */
-main.enter>*{animation:enter .45s ease-out both}
-main.enter>*:nth-child(2){animation-delay:.05s}
-main.enter>*:nth-child(3){animation-delay:.1s}
-main.enter>*:nth-child(4){animation-delay:.15s}
-main.enter>*:nth-child(5){animation-delay:.2s}
-main.enter>*:nth-child(n+6){animation-delay:.25s}
-
-@media print{body::before{display:none}}
-
 </style>
 </head>
 <body>
@@ -905,16 +837,7 @@ function doSetupAdmin() {
 /* =====================================================================
    5. NAVIGATION ET MISE EN PAGE
    ===================================================================== */
-/* Retour à l'accueil = fin de session : professeurs déconnectés, codes des parents oubliés.
-   À la prochaine visite de « Parents » ou « Professeurs », on redemande les informations. */
-function endSession() {
-  Local.set('school-children', []);
-  pb = {}; view.pcode = ''; view.ecode = ''; view.entryErr = '';
-  if (ONLINE) { try { if (fauth && fauth.currentUser) fauth.signOut().catch(() => {}); } catch (e) {} }
-  else me = null;
-}
 function navigate(p) {
-  if (p === '/' && route !== '/') endSession();
   route = p;
   if (p === '/prof/equipe') view.team.loaded = false;
   if (p !== '/prof/etablissement') view.es = null;
@@ -925,7 +848,7 @@ function navigate(p) {
 window.addEventListener('hashchange', () => {
   let h = '/';
   try { h = location.hash.slice(1) || '/'; } catch (e) {}
-  if (h !== route) { if (h === '/') endSession(); route = h; render(); }
+  if (h !== route) { route = h; render(); }
 });
 
 const termBar = () => `<div class="seg" role="group" aria-label="Trimestre">${
@@ -996,7 +919,7 @@ function homePage() {
 
 /* ---------- Infos : établissement, annonces, aide ---------- */
 const FAQ_PARENTS = [
-  ['Comment voir les notes de mon enfant ?', 'Allez dans « Parents », entrez le code de votre enfant (remis par le professeur ou l’établissement) puis touchez « Voir les notes ». Un menu s’ouvre avec le bulletin complet et la liste des professeurs de votre enfant, avec leur matière : touchez un professeur pour voir ses notes. Le code est oublié quand vous revenez à l’accueil : vous devrez le saisir de nouveau. Si vous avez plusieurs enfants, ajoutez un code pour chacun.'],
+  ['Comment voir les notes de mon enfant ?', 'Allez dans « Parents », entrez le code de votre enfant (remis par le professeur ou l’établissement) puis touchez « Voir les notes ». Un menu s’ouvre avec le bulletin complet et la liste des professeurs de votre enfant, avec leur matière : touchez un professeur pour voir ses notes. Le code reste enregistré sur votre téléphone. Si vous avez plusieurs enfants, ajoutez un code pour chacun.'],
   ['Que signifient les cercles de couleur ?', 'Le cercle indique la moyenne sur 20 : vert à partir de 10, rouge en dessous de 10. Sur les barres, le trait rouge pointillé marque la moyenne de 10, et la barre grise donne la moyenne de la classe.'],
   ['Comment la moyenne est-elle calculée ?', 'La moyenne d’une matière est la moyenne de toutes les notes du trimestre (devoirs et interrogations). La moyenne générale est la moyenne des matières, multipliées par leur coefficient. La moyenne annuelle est la moyenne des moyennes de chaque trimestre.'],
   ['Que veulent dire le rang et l’appréciation ?', 'Le rang est la place de l’élève dans sa classe selon la moyenne générale (par exemple 3e sur 40). L’appréciation est indicative : 16 et plus Excellent, 14 à 16 Très bien, 12 à 14 Bien, 10 à 12 Passable, 8 à 10 Insuffisant, moins de 8 Faible.'],
@@ -1061,7 +984,7 @@ function parentsPage() {
         <h2 style="margin:0">Les notes de mon enfant</h2>
         <button class="btn alt small" data-a="refresh">Actualiser</button>
       </div>
-      <p class="hint">Le professeur vous donne un code pour chaque enfant. Entrez-le ici : il sera oublié quand vous reviendrez à l’accueil, vous devrez alors le saisir de nouveau.</p>
+      <p class="hint">Le professeur vous donne un code pour chaque enfant. Entrez-le ici : il restera enregistré sur cet appareil.</p>
       <label for="pcode">Code de l’enfant</label>
       <div class="row" style="margin-top:0">
         <input type="text" id="pcode" data-f="pcode" value="${esc(view.pcode)}" placeholder="Ex. : K7M2-QX4R" autocomplete="off" autocapitalize="characters" style="flex:1; min-width:150px">
